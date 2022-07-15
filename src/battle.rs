@@ -12,7 +12,7 @@ struct RolledDie {
 
 impl RolledDie {
     fn update(&mut self) {
-        self.cooldown = self.cooldown.wrapping_sub(1)
+        self.cooldown = self.cooldown.saturating_sub(1);
     }
 
     fn can_reroll(&self) -> bool {
