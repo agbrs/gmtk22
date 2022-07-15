@@ -133,6 +133,11 @@ fn main(mut gba: agb::Gba) -> ! {
     let vblank = agb::interrupt::VBlank::get();
 
     loop {
+        let mut o = gfx.object(gfx.sprite(FACE_SPRITES.sprite_for_face(Face::Attack)));
+        o.show();
+        o.set_x(100);
+        o.set_y(100);
+
         vblank.wait_for_vblank();
         gfx.commit();
     }
