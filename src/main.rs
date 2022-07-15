@@ -15,9 +15,9 @@ use agb::display::object::{ObjectController, Sprite, Tag};
 use agb::display::tiled::VRamManager;
 use agb::display::Priority;
 use agb::interrupt::VBlank;
-use agb::rng::RandomNumberGenerator;
 
 extern crate alloc;
+use alloc::vec;
 use alloc::vec::Vec;
 
 mod background;
@@ -82,8 +82,8 @@ struct Die {
 
 impl Die {
     /// roll this die (potentially using the custom probabilities, should we implement that) and return which face index is showing
-    fn roll(&self, rng: &mut RandomNumberGenerator) -> Face {
-        let n = rng.gen().rem_euclid(6);
+    fn roll(&self) -> Face {
+        let n = agb::rng::gen().rem_euclid(6);
         self.faces[n as usize]
     }
 }
@@ -129,7 +129,20 @@ fn main(mut gba: agb::Gba) -> ! {
         vram,
     };
 
-    let mut dice = PlayerDice { dice: Vec::new() };
+    let basic_die = Die {
+        faces: [
+            Face::Attack,
+            Face::Attack,
+            Face::Attack,
+            Face::Malfunction,
+            Face::Shield,
+            Face::Shield,
+        ],
+    };
+
+    let mut dice = PlayerDice {
+        dice: vec![basic_die; 5],
+    };
 
     loop {
         dice = customise::customise_screen(&mut agb, dice.clone());

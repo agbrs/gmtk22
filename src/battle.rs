@@ -1,4 +1,4 @@
-use crate::{Agb, Face, PlayerDice, ShipSprites, SHIP_SPRITES};
+use crate::{Agb, Face, PlayerDice, ShipSprites, FACE_SPRITES, SELECT_BOX, SHIP_SPRITES};
 use agb::hash_map::HashMap;
 use alloc::vec::Vec;
 
@@ -67,13 +67,58 @@ pub(crate) fn battle_screen(agb: &mut Agb, player_dice: PlayerDice) {
     let player_sprite = SHIP_SPRITES.sprites[0];
     let enemy_sprite = SHIP_SPRITES.sprites[1];
 
-    let mut player_obj = agb.obj.object(agb.obj.sprite(player_sprite));
-    let mut enemy_obj = agb.obj.object(agb.obj.sprite(enemy_sprite));
+    let obj = &agb.obj;
+
+    let mut player_obj = obj.object(obj.sprite(player_sprite));
+    let mut enemy_obj = obj.object(obj.sprite(enemy_sprite));
 
     player_obj.set_x(27).set_y(16).set_z(1).show();
     enemy_obj.set_x(167).set_y(16).set_z(1).show();
 
+    let mut select_box = agb.obj.object(agb.obj.sprite(SELECT_BOX.sprite(0)));
+    select_box.show();
+
+    let current_battle_state = CurrentBattleState {
+        player: PlayerState {
+            shield_count: 0,
+            health: 100,
+        },
+        enemy: EnemyState {},
+        rolled_dice: RolledDice {
+            rolls: player_dice
+                .dice
+                .iter()
+                .map(|die| RolledDie {
+                    face: die.roll(),
+                    cooldown: 0,
+                })
+                .collect(),
+        },
+    };
+
+    let mut dice_display: Vec<_> = current_battle_state
+        .rolled_dice
+        .rolls
+        .iter()
+        .enumerate()
+        .map(|(i, die)| {
+            let mut die_obj = obj.object(obj.sprite(FACE_SPRITES.sprite_for_face(die.face)));
+
+            die_obj.set_y(120).set_x(i as u16 * 40 + 28).show();
+
+            die_obj
+        })
+        .collect();
+
     loop {
+        // update the dice display to display the current values
+        for (die_obj, current_roll) in dice_display
+            .iter_mut()
+            .zip(current_battle_state.rolled_dice.rolls.iter())
+        {
+            die_obj.set_sprite(obj.sprite(FACE_SPRITES.sprite_for_face(current_roll.face)));
+        }
+
         agb.star_background.update();
         agb.vblank.wait_for_vblank();
         agb.obj.commit();

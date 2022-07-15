@@ -78,7 +78,7 @@ fn move_net_position_ud(idx: usize, direction: Tri) -> usize {
     }
 }
 
-fn create_net(gfx: &ObjectController, die: Die) -> Vec<Object> {
+fn create_net<'a>(gfx: &'a ObjectController, die: &'_ Die) -> Vec<Object<'a>> {
     let mut objects = Vec::new();
     for (idx, &face) in die.faces.iter().enumerate() {
         let mut obj = gfx.object(gfx.sprite(FACE_SPRITES.sprite_for_face(face)));
@@ -97,19 +97,7 @@ fn create_net(gfx: &ObjectController, die: Die) -> Vec<Object> {
 pub(crate) fn customise_screen(agb: &mut Agb, player_dice: PlayerDice) -> PlayerDice {
     // create the dice
 
-    let net = create_net(
-        &agb.obj,
-        Die {
-            faces: [
-                Face::Attack,
-                Face::Malfunction,
-                Face::Shield,
-                Face::Shield,
-                Face::Attack,
-                Face::Attack,
-            ],
-        },
-    );
+    let net = create_net(&agb.obj, &player_dice.dice[0]);
 
     let mut input = agb::input::ButtonController::new();
 
@@ -150,6 +138,7 @@ pub(crate) fn customise_screen(agb: &mut Agb, player_dice: PlayerDice) -> Player
         select_box.set_sprite(agb.obj.sprite(SELECT_BOX.animation_sprite(counter / 10)));
 
         agb.star_background.update();
+        agb::rng::gen();
         agb.vblank.wait_for_vblank();
         agb.obj.commit();
         agb.star_background.commit(&mut agb.vram);
