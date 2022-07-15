@@ -22,6 +22,7 @@ extern crate alloc;
 use alloc::vec::Vec;
 
 mod background;
+mod battle;
 mod customise;
 
 use background::StarBackground;
@@ -144,13 +145,6 @@ struct Agb<'a> {
     vram: VRamManager,
 }
 
-fn battle_screen(agb: &mut Agb, player_dice: PlayerDice) {
-    loop {
-        agb.vblank.wait_for_vblank();
-        agb.obj.commit();
-    }
-}
-
 fn main(mut gba: agb::Gba) -> ! {
     let gfx = gba.display.object.get();
     let vblank = agb::interrupt::VBlank::get();
@@ -185,7 +179,7 @@ fn main(mut gba: agb::Gba) -> ! {
     loop {
         dice = customise::customise_screen(&mut agb, dice.clone());
 
-        battle_screen(&mut agb, dice.clone());
+        battle::battle_screen(&mut agb, dice.clone());
     }
 }
 
