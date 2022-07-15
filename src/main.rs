@@ -47,6 +47,15 @@ struct RolledDie {
     cooldown: u32,
 }
 
+impl RolledDie {
+    fn update(&mut self) {
+        self.cooldown = self.cooldown.wrapping_sub(1)
+    }
+
+    fn can_reroll(&self) -> bool {
+        self.face != Face::Malfunction || self.cooldown == 0
+    }
+}
 struct RolledDice {
     rolls: Vec<RolledDie>,
 }
