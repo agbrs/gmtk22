@@ -1,5 +1,5 @@
 use crate::{Agb, Face, PlayerDice, ShipSprites, FACE_SPRITES, SELECT_BOX, SHIP_SPRITES};
-use agb::hash_map::HashMap;
+use agb::{hash_map::HashMap, input::Button};
 use alloc::vec::Vec;
 
 /// A face of the rolled die and it's cooldown (should it be a malfunction)
@@ -75,8 +75,8 @@ pub(crate) fn battle_screen(agb: &mut Agb, player_dice: PlayerDice) {
     player_obj.set_x(27).set_y(16).set_z(1).show();
     enemy_obj.set_x(167).set_y(16).set_z(1).show();
 
-    let mut select_box = agb.obj.object(agb.obj.sprite(SELECT_BOX.sprite(0)));
-    select_box.show();
+    let mut select_box_obj = agb.obj.object(agb.obj.sprite(SELECT_BOX.sprite(0)));
+    select_box_obj.show();
 
     let current_battle_state = CurrentBattleState {
         player: PlayerState {
@@ -110,7 +110,12 @@ pub(crate) fn battle_screen(agb: &mut Agb, player_dice: PlayerDice) {
         })
         .collect();
 
+    let mut selected_die = 0usize;
+    let mut input = agb::input::ButtonController::new();
+
     loop {
+        input.update();
+
         // update the dice display to display the current values
         for (die_obj, current_roll) in dice_display
             .iter_mut()
@@ -118,6 +123,26 @@ pub(crate) fn battle_screen(agb: &mut Agb, player_dice: PlayerDice) {
         {
             die_obj.set_sprite(obj.sprite(FACE_SPRITES.sprite_for_face(current_roll.face)));
         }
+
+        if input.is_just_pressed(Button::LEFT) {
+            if selected_die == 0 {
+                selected_die = player_dice.dice.len() - 1;
+            } else {
+                selected_die -= 1;
+            }
+        }
+
+        if input.is_just_pressed(Button::RIGHT) {
+            if selected_die == player_dice.dice.len() - 1 {
+                selected_die = 0;
+            } else {
+                selected_die += 1;
+            }
+        }
+
+        select_box_obj
+            .set_y(120 - 3)
+            .set_x(selected_die as u16 * 40 + 28 - 3);
 
         agb.star_background.update();
         agb.vblank.wait_for_vblank();
