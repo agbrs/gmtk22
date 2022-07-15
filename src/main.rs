@@ -10,7 +10,7 @@
 // which won't be a particularly clear error message.
 #![no_main]
 
-use agb::display::object::{ObjectController, Sprite};
+use agb::display::object::{ObjectController, Sprite, Tag};
 use agb::hash_map::HashMap;
 use agb::interrupt::VBlank;
 use agb::rng::RandomNumberGenerator;
@@ -19,7 +19,13 @@ use agb::{display, syscall};
 extern crate alloc;
 use alloc::vec::Vec;
 
+mod customise;
+
+const DICE_FACES: &agb::display::object::Graphics =
+    agb::include_aseprite!("gfx/dice-faces.aseprite");
+
 const FACE_SPRITES: &FaceSprites = &FaceSprites::load_face_sprites();
+const SELECT_BOX: &Tag = DICE_FACES.tags().get("selection");
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Hash)]
 enum Face {
@@ -34,12 +40,9 @@ struct FaceSprites {
 
 impl FaceSprites {
     const fn load_face_sprites() -> Self {
-        const DICE_FACES: &agb::display::object::Graphics =
-            agb::include_aseprite!("gfx/dice-faces.aseprite");
-
         const S_SHOOT: &Sprite = DICE_FACES.tags().get("shoot").sprite(0);
-        const S_SHIELD: &Sprite = DICE_FACES.tags().get("shoot").sprite(0);
-        const S_MALFUNCTION: &Sprite = DICE_FACES.tags().get("shoot").sprite(0);
+        const S_SHIELD: &Sprite = DICE_FACES.tags().get("shield").sprite(0);
+        const S_MALFUNCTION: &Sprite = DICE_FACES.tags().get("malfunction").sprite(0);
         Self {
             sprites: [S_SHOOT, S_SHIELD, S_MALFUNCTION],
         }
@@ -140,12 +143,6 @@ fn battle_screen(agb: &mut Agb, player_dice: PlayerDice) {
         agb.obj.commit();
     }
 }
-fn customise_screen(agb: &mut Agb, player_dice: PlayerDice) -> PlayerDice {
-    loop {
-        agb.vblank.wait_for_vblank();
-        agb.obj.commit();
-    }
-}
 
 fn main(mut gba: agb::Gba) -> ! {
     let gfx = gba.display.object.get();
@@ -156,8 +153,9 @@ fn main(mut gba: agb::Gba) -> ! {
     let mut dice = PlayerDice { dice: Vec::new() };
 
     loop {
+        dice = customise::customise_screen(&mut agb, dice.clone());
+
         battle_screen(&mut agb, dice.clone());
-        dice = customise_screen(&mut agb, dice.clone());
     }
 }
 
