@@ -10,6 +10,7 @@
 // which won't be a particularly clear error message.
 #![no_main]
 
+use agb::rng::RandomNumberGenerator;
 use agb::{display, syscall};
 
 extern crate alloc;
@@ -24,6 +25,17 @@ enum Face {
 
 struct Die {
     faces: [Face; 6],
+}
+
+impl Die {
+    /// roll this die (potentially using the custom probabilities, should we implement that) and return which face index is showing
+    fn roll(&self, rng: &mut RandomNumberGenerator) -> FaceIndex {
+        let n = rng.gen().rem_euclid(6);
+        FaceIndex(n as usize)
+    }
+    fn get_face(&self, face: FaceIndex) -> Face {
+        self.faces[face.0]
+    }
 }
 
 struct PlayerDice {
