@@ -1,4 +1,4 @@
-use crate::{Agb, Face, PlayerDice};
+use crate::{Agb, Face, PlayerDice, ShipSprites, SHIP_SPRITES};
 use agb::hash_map::HashMap;
 use alloc::vec::Vec;
 
@@ -64,8 +64,19 @@ impl CurrentBattleState {
 }
 
 pub(crate) fn battle_screen(agb: &mut Agb, player_dice: PlayerDice) {
+    let player_sprite = SHIP_SPRITES.sprites[0];
+    let enemy_sprite = SHIP_SPRITES.sprites[1];
+
+    let mut player_obj = agb.obj.object(agb.obj.sprite(player_sprite));
+    let mut enemy_obj = agb.obj.object(agb.obj.sprite(enemy_sprite));
+
+    player_obj.set_x(27).set_y(16).set_z(1).show();
+    enemy_obj.set_x(167).set_y(16).set_z(1).show();
+
     loop {
+        agb.star_background.update();
         agb.vblank.wait_for_vblank();
         agb.obj.commit();
+        agb.star_background.commit(&mut agb.vram);
     }
 }

@@ -28,9 +28,11 @@ use background::StarBackground;
 
 const DICE_FACES: &agb::display::object::Graphics =
     agb::include_aseprite!("gfx/dice-faces.aseprite");
-
 const FACE_SPRITES: &FaceSprites = &FaceSprites::load_face_sprites();
 const SELECT_BOX: &Tag = DICE_FACES.tags().get("selection");
+
+const SHIPS: &agb::display::object::Graphics = agb::include_aseprite!("gfx/ships.aseprite");
+const SHIP_SPRITES: &ShipSprites = &ShipSprites::load_ship_sprites();
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Hash)]
 enum Face {
@@ -55,6 +57,21 @@ impl FaceSprites {
 
     fn sprite_for_face(&self, face: Face) -> &'static Sprite {
         self.sprites[face as usize]
+    }
+}
+
+struct ShipSprites {
+    sprites: [&'static Sprite; 2],
+}
+
+impl ShipSprites {
+    const fn load_ship_sprites() -> Self {
+        const S_PLAYER: &Sprite = SHIPS.tags().get("player").sprite(0);
+        const S_DRONE: &Sprite = SHIPS.tags().get("drone").sprite(0);
+
+        Self {
+            sprites: [S_PLAYER, S_DRONE],
+        }
     }
 }
 

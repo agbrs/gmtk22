@@ -143,6 +143,10 @@ pub(crate) fn customise_screen(agb: &mut Agb, player_dice: PlayerDice) -> Player
             select_box.set_y((y - 32 / 2) as u16);
         }
 
+        if input.is_just_pressed(Button::A) {
+            return player_dice;
+        }
+
         select_box.set_sprite(agb.obj.sprite(SELECT_BOX.animation_sprite(counter / 10)));
 
         agb.star_background.update();
