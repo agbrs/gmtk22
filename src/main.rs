@@ -29,12 +29,9 @@ struct Die {
 
 impl Die {
     /// roll this die (potentially using the custom probabilities, should we implement that) and return which face index is showing
-    fn roll(&self, rng: &mut RandomNumberGenerator) -> FaceIndex {
+    fn roll(&self, rng: &mut RandomNumberGenerator) -> Face {
         let n = rng.gen().rem_euclid(6);
-        FaceIndex(n as usize)
-    }
-    fn get_face(&self, face: FaceIndex) -> Face {
-        self.faces[face.0]
+        self.faces[n as usize]
     }
 }
 
@@ -44,8 +41,14 @@ struct PlayerDice {
 
 struct FaceIndex(usize);
 
+/// A face of the rolled die and it's cooldown (should it be a malfunction)
+struct RolledDie {
+    face: Face,
+    cooldown: u32,
+}
+
 struct RolledDice {
-    rolls: Vec<FaceIndex>,
+    rolls: Vec<RolledDie>,
 }
 
 struct PlayerState {
