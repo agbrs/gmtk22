@@ -1,5 +1,8 @@
 use agb::{
-    display::object::{Object, ObjectController},
+    display::{
+        object::{Object, ObjectController},
+        HEIGHT,
+    },
     input::{Button, Tri},
 };
 use alloc::vec::Vec;
@@ -20,6 +23,11 @@ fn net_position_for_index(idx: usize) -> (u32, u32) {
     } else {
         (idx as u32, 1)
     }
+}
+
+fn screen_position_for_index(idx: usize) -> (u32, u32) {
+    let (x, y) = net_position_for_index(idx);
+    (x * 32 + 20, y * 32 + HEIGHT as u32 - 3 * 32)
 }
 
 fn move_net_position_lr(idx: usize, direction: Tri) -> usize {
@@ -74,9 +82,9 @@ fn create_net(gfx: &ObjectController, die: Die) -> Vec<Object> {
     let mut objects = Vec::new();
     for (idx, &face) in die.faces.iter().enumerate() {
         let mut obj = gfx.object(gfx.sprite(FACE_SPRITES.sprite_for_face(face)));
-        let (x, y) = net_position_for_index(idx);
-        obj.set_x((x * 32 + 20) as u16);
-        obj.set_y((y * 32 + 30) as u16);
+        let (x, y) = screen_position_for_index(idx);
+        obj.set_x((x - 24 / 2) as u16);
+        obj.set_y((y - 24 / 2) as u16);
 
         obj.show();
 
@@ -130,9 +138,9 @@ pub(crate) fn customise_screen(agb: &mut Agb, player_dice: PlayerDice) -> Player
         current_net_index = move_net_position_ud(current_net_index, ud);
 
         {
-            let (x, y) = net_position_for_index(current_net_index);
-            select_box.set_x((x * 32 + 20 - 4) as u16);
-            select_box.set_y((y * 32 + 30 - 4) as u16);
+            let (x, y) = screen_position_for_index(current_net_index);
+            select_box.set_x((x - 32 / 2) as u16);
+            select_box.set_y((y - 32 / 2) as u16);
         }
 
         select_box.set_sprite(agb.obj.sprite(SELECT_BOX.animation_sprite(counter / 10)));
