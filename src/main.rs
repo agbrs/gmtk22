@@ -10,6 +10,7 @@
 // which won't be a particularly clear error message.
 #![no_main]
 
+use agb::display::object::Sprite;
 use agb::hash_map::HashMap;
 use agb::rng::RandomNumberGenerator;
 use agb::{display, syscall};
@@ -17,14 +18,35 @@ use agb::{display, syscall};
 extern crate alloc;
 use alloc::vec::Vec;
 
-const DICE_FACES: &agb::display::object::Graphics =
-    agb::include_aseprite!("gfx/dice-faces.aseprite");
+const FACE_SPRITES: &FaceSprites = &FaceSprites::load_face_sprites();
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Hash)]
 enum Face {
     Attack,
     Shield,
     Malfunction,
+}
+
+struct FaceSprites {
+    sprites: [&'static Sprite; 3],
+}
+
+impl FaceSprites {
+    const fn load_face_sprites() -> Self {
+        const DICE_FACES: &agb::display::object::Graphics =
+            agb::include_aseprite!("gfx/dice-faces.aseprite");
+
+        const S_SHOOT: &Sprite = DICE_FACES.tags().get("shoot").sprite(0);
+        const S_SHIELD: &Sprite = DICE_FACES.tags().get("shoot").sprite(0);
+        const S_MALFUNCTION: &Sprite = DICE_FACES.tags().get("shoot").sprite(0);
+        Self {
+            sprites: [S_SHOOT, S_SHIELD, S_MALFUNCTION],
+        }
+    }
+
+    fn sprite_for_face(&self, face: Face) -> &'static Sprite {
+        self.sprites[face as usize]
+    }
 }
 
 #[derive(Debug)]
