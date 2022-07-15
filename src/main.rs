@@ -10,6 +10,7 @@
 // which won't be a particularly clear error message.
 #![no_main]
 
+use agb::hash_map::HashMap;
 use agb::rng::RandomNumberGenerator;
 use agb::{display, syscall};
 
@@ -89,13 +90,13 @@ struct CurrentBattleState {
 impl CurrentBattleState {
     fn accept_rolls(&mut self) {
         let rolls = &self.rolled_dice.rolls;
-        let mut face_counts = agb::hash_map::HashMap::new();
+        let mut face_counts: HashMap<Face, u32> = HashMap::new();
         for f in rolls {
-            *face_counts.entry(f.face).or_insert(0u32) += 1;
+            *face_counts.entry(f.face).or_default() += 1;
         }
 
         // shield
-        let shield = face_counts.entry(Face::Shield).or_insert(0);
+        let shield = face_counts.entry(Face::Shield).or_default();
         if self.player.shield_count <= *shield {
             self.player.shield_count += 1;
         }
