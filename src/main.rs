@@ -16,7 +16,7 @@ use agb::{display, syscall};
 extern crate alloc;
 use alloc::vec::Vec;
 
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Hash)]
 enum Face {
     Attack,
     Shield,
@@ -74,7 +74,32 @@ impl RolledDice {
 struct PlayerState {
     shield_count: u32,
     health: u32,
+}
+
+#[derive(Debug)]
+struct EnemyState {}
+
+#[derive(Debug)]
+struct CurrentBattleState {
+    player: PlayerState,
+    enemy: EnemyState,
     rolled_dice: RolledDice,
+}
+
+impl CurrentBattleState {
+    fn accept_rolls(&mut self) {
+        let rolls = &self.rolled_dice.rolls;
+        let mut face_counts = agb::hash_map::HashMap::new();
+        for f in rolls {
+            *face_counts.entry(f.face).or_insert(0u32) += 1;
+        }
+
+        // shield
+        let shield = face_counts.entry(Face::Shield).or_insert(0);
+        if self.player.shield_count <= *shield {
+            self.player.shield_count += 1;
+        }
+    }
 }
 
 fn main(mut gba: agb::Gba) -> ! {
