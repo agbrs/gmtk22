@@ -10,8 +10,9 @@
 // which won't be a particularly clear error message.
 #![no_main]
 
-use agb::display::object::Sprite;
+use agb::display::object::{ObjectController, Sprite};
 use agb::hash_map::HashMap;
+use agb::interrupt::VBlank;
 use agb::rng::RandomNumberGenerator;
 use agb::{display, syscall};
 
@@ -49,7 +50,7 @@ impl FaceSprites {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct Die {
     faces: [Face; 6],
 }
@@ -62,7 +63,7 @@ impl Die {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct PlayerDice {
     dice: Vec<Die>,
 }
@@ -128,18 +129,35 @@ impl CurrentBattleState {
     }
 }
 
+struct Agb {
+    obj: ObjectController,
+    vblank: VBlank,
+}
+
+fn battle_screen(agb: &mut Agb, player_dice: PlayerDice) {
+    loop {
+        agb.vblank.wait_for_vblank();
+        agb.obj.commit();
+    }
+}
+fn customise_screen(agb: &mut Agb, player_dice: PlayerDice) -> PlayerDice {
+    loop {
+        agb.vblank.wait_for_vblank();
+        agb.obj.commit();
+    }
+}
+
 fn main(mut gba: agb::Gba) -> ! {
     let gfx = gba.display.object.get();
     let vblank = agb::interrupt::VBlank::get();
 
-    loop {
-        let mut o = gfx.object(gfx.sprite(FACE_SPRITES.sprite_for_face(Face::Attack)));
-        o.show();
-        o.set_x(100);
-        o.set_y(100);
+    let mut agb = Agb { obj: gfx, vblank };
 
-        vblank.wait_for_vblank();
-        gfx.commit();
+    let mut dice = PlayerDice { dice: Vec::new() };
+
+    loop {
+        battle_screen(&mut agb, dice.clone());
+        dice = customise_screen(&mut agb, dice.clone());
     }
 }
 
