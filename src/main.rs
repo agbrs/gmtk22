@@ -17,6 +17,9 @@ use agb::{display, syscall};
 extern crate alloc;
 use alloc::vec::Vec;
 
+const DICE_FACES: agb::display::object::Graphics =
+    agb::include_aseprite!("gfx/dice-faces.aseprite");
+
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Hash)]
 enum Face {
     Attack,
