@@ -16,7 +16,7 @@ fn create_background_map(map: &mut RegularMap, vram: &mut VRamManager, stars_til
             let blank = rng::gen().rem_euclid(32) < 30;
 
             let tile_id = if blank {
-                0
+                (1 << 10) - 1
             } else {
                 rng::gen().rem_euclid(64) as u16
             };
