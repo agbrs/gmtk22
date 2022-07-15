@@ -11,6 +11,8 @@
 #![no_main]
 
 use agb::display::object::{ObjectController, Sprite, Tag};
+use agb::display::tiled::VRamManager;
+use agb::display::Priority;
 use agb::hash_map::HashMap;
 use agb::interrupt::VBlank;
 use agb::rng::RandomNumberGenerator;
@@ -19,7 +21,10 @@ use agb::{display, syscall};
 extern crate alloc;
 use alloc::vec::Vec;
 
+mod background;
 mod customise;
+
+use background::StarBackground;
 
 const DICE_FACES: &agb::display::object::Graphics =
     agb::include_aseprite!("gfx/dice-faces.aseprite");
@@ -132,9 +137,11 @@ impl CurrentBattleState {
     }
 }
 
-struct Agb {
+struct Agb<'a> {
     obj: ObjectController,
     vblank: VBlank,
+    star_background: StarBackground<'a>,
+    vram: VRamManager,
 }
 
 fn battle_screen(agb: &mut Agb, player_dice: PlayerDice) {
@@ -148,7 +155,30 @@ fn main(mut gba: agb::Gba) -> ! {
     let gfx = gba.display.object.get();
     let vblank = agb::interrupt::VBlank::get();
 
-    let mut agb = Agb { obj: gfx, vblank };
+    let (tiled, mut vram) = gba.display.video.tiled0();
+    let mut background0 = tiled.background(
+        Priority::P0,
+        display::tiled::RegularBackgroundSize::Background64x32,
+    );
+    let mut background1 = tiled.background(
+        Priority::P0,
+        display::tiled::RegularBackgroundSize::Background64x32,
+    );
+
+    background::load_palettes(&mut vram);
+    background0.show();
+    background1.show();
+
+    let mut star_background = StarBackground::new(&mut background0, &mut background1, &mut vram);
+
+    star_background.commit(&mut vram);
+
+    let mut agb = Agb {
+        obj: gfx,
+        vblank,
+        star_background,
+        vram,
+    };
 
     let mut dice = PlayerDice { dice: Vec::new() };
 

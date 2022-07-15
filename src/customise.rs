@@ -145,7 +145,9 @@ pub(crate) fn customise_screen(agb: &mut Agb, player_dice: PlayerDice) -> Player
 
         select_box.set_sprite(agb.obj.sprite(SELECT_BOX.animation_sprite(counter / 10)));
 
+        agb.star_background.update();
         agb.vblank.wait_for_vblank();
         agb.obj.commit();
+        agb.star_background.commit(&mut agb.vram);
     }
 }
