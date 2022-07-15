@@ -16,13 +16,14 @@ use agb::{display, syscall};
 extern crate alloc;
 use alloc::vec::Vec;
 
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
 enum Face {
     Attack,
     Shield,
     Malfunction,
 }
 
+#[derive(Debug)]
 struct Die {
     faces: [Face; 6],
 }
@@ -35,13 +36,14 @@ impl Die {
     }
 }
 
+#[derive(Debug)]
 struct PlayerDice {
     dice: Vec<Die>,
 }
 
-struct FaceIndex(usize);
-
 /// A face of the rolled die and it's cooldown (should it be a malfunction)
+#[derive(Debug)]
+
 struct RolledDie {
     face: Face,
     cooldown: u32,
@@ -56,10 +58,13 @@ impl RolledDie {
         self.face != Face::Malfunction || self.cooldown == 0
     }
 }
+
+#[derive(Debug)]
 struct RolledDice {
     rolls: Vec<RolledDie>,
 }
 
+#[derive(Debug)]
 struct PlayerState {
     shield_count: u32,
     health: u32,
