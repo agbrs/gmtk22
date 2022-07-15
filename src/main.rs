@@ -48,20 +48,23 @@ struct RolledDice {
     rolls: Vec<FaceIndex>,
 }
 
-// The main function must take 1 arguments and never return. The agb::entry decorator
-// ensures that everything is in order. `agb` will call this after setting up the stack
-// and interrupt handlers correctly. It will also handle creating the `Gba` struct for you.
-#[agb::entry]
-fn main(mut gba: agb::Gba) -> ! {
-    let mut bitmap = gba.display.video.bitmap3();
+struct PlayerState {
+    shield_count: u32,
+    health: u32,
+    rolled_dice: RolledDice,
+}
 
-    for x in 0..display::WIDTH {
-        let y = syscall::sqrt(x << 6);
-        let y = (display::HEIGHT - y).clamp(0, display::HEIGHT - 1);
-        bitmap.draw_point(x, y, 0x001F);
-    }
+fn main(mut gba: agb::Gba) -> ! {
+    let gfx = gba.display.object.get();
+    let vblank = agb::interrupt::VBlank::get();
 
     loop {
-        syscall::halt();
+        vblank.wait_for_vblank();
+        gfx.commit();
     }
+}
+
+#[agb::entry]
+fn entry(mut gba: agb::Gba) -> ! {
+    main(gba)
 }
