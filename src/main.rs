@@ -64,6 +64,12 @@ struct RolledDice {
     rolls: Vec<RolledDie>,
 }
 
+impl RolledDice {
+    fn update(&mut self) {
+        self.rolls.iter_mut().for_each(RolledDie::update);
+    }
+}
+
 #[derive(Debug)]
 struct PlayerState {
     shield_count: u32,
