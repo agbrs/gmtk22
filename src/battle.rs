@@ -1,8 +1,9 @@
-use crate::{Agb, Face, PlayerDice, ShipSprites, FACE_SPRITES, SELECT_BOX, SHIP_SPRITES};
+use crate::{Agb, Die, Face, PlayerDice, ShipSprites, FACE_SPRITES, SELECT_BOX, SHIP_SPRITES};
 use agb::{hash_map::HashMap, input::Button};
 use alloc::vec::Vec;
 
 const MALFUNCTION_COOLDOWN_FRAMES: u32 = 3 * 60;
+const ROLL_TIME_FRAMES: u32 = 1 * 60;
 
 /// A face of the rolled die and it's cooldown (should it be a malfunction)
 #[derive(Debug)]
@@ -13,6 +14,16 @@ struct RolledDie {
 }
 
 impl RolledDie {
+    fn new(face: Face) -> Self {
+        let cooldown = if face == Face::Malfunction {
+            MALFUNCTION_COOLDOWN_FRAMES
+        } else {
+            0
+        };
+
+        Self { face, cooldown }
+    }
+
     fn update(&mut self) {
         self.cooldown = self.cooldown.saturating_sub(1);
     }
@@ -23,13 +34,53 @@ impl RolledDie {
 }
 
 #[derive(Debug)]
+enum DieState {
+    Rolling(u32),
+    Rolled(RolledDie),
+}
+
+#[derive(Debug)]
 struct RolledDice {
-    rolls: Vec<RolledDie>,
+    rolls: Vec<DieState>,
 }
 
 impl RolledDice {
-    fn update(&mut self) {
-        self.rolls.iter_mut().for_each(RolledDie::update);
+    fn update(&mut self, player_dice: &PlayerDice) {
+        self.rolls
+            .iter_mut()
+            .zip(player_dice.dice.iter())
+            .for_each(|(die_state, player_die)| match die_state {
+                DieState::Rolling(ref mut timeout) => {
+                    if *timeout == 0 {
+                        *die_state = DieState::Rolled(RolledDie::new(player_die.roll()));
+                    } else {
+                        *timeout -= 1;
+                    }
+                }
+                DieState::Rolled(ref mut rolled_die) => rolled_die.update(),
+            });
+    }
+
+    fn faces_for_accepting(&self) -> impl Iterator<Item = Face> + '_ {
+        self.rolls.iter().filter_map(|state| match state {
+            DieState::Rolled(rolled_die) if rolled_die.face != Face::Malfunction => {
+                Some(rolled_die.face)
+            }
+            _ => None,
+        })
+    }
+
+    fn faces_to_render<'a>(
+        &'a self,
+        player_dice: &'a PlayerDice,
+    ) -> impl Iterator<Item = Face> + 'a {
+        self.rolls
+            .iter()
+            .zip(player_dice.dice.iter())
+            .map(|(rolled_die, player_die)| match rolled_die {
+                DieState::Rolling(_) => player_die.roll(),
+                DieState::Rolled(RolledDie { face, .. }) => *face,
+            })
     }
 }
 
@@ -52,10 +103,9 @@ struct CurrentBattleState {
 
 impl CurrentBattleState {
     fn accept_rolls(&mut self) {
-        let rolls = &self.rolled_dice.rolls;
         let mut face_counts: HashMap<Face, u32> = HashMap::new();
-        for f in rolls {
-            *face_counts.entry(f.face).or_default() += 1;
+        for face in self.rolled_dice.faces_for_accepting() {
+            *face_counts.entry(face).or_default() += 1;
         }
 
         // shield
@@ -66,12 +116,9 @@ impl CurrentBattleState {
     }
 
     fn roll_die(&mut self, die_index: usize) {
-        let selected_rolled_die = &mut self.rolled_dice.rolls[die_index];
-        if selected_rolled_die.can_reroll() {
-            selected_rolled_die.face = self.player_dice.dice[die_index].roll();
-
-            if selected_rolled_die.face == Face::Malfunction {
-                selected_rolled_die.cooldown = MALFUNCTION_COOLDOWN_FRAMES;
+        if let DieState::Rolled(ref selected_rolled_die) = self.rolled_dice.rolls[die_index] {
+            if selected_rolled_die.can_reroll() {
+                self.rolled_dice.rolls[die_index] = DieState::Rolling(ROLL_TIME_FRAMES);
             }
         }
     }
@@ -104,22 +151,18 @@ pub(crate) fn battle_screen(agb: &mut Agb, player_dice: PlayerDice) {
             rolls: player_dice
                 .dice
                 .iter()
-                .map(|die| RolledDie {
-                    face: die.roll(),
-                    cooldown: 0,
-                })
+                .map(|_| DieState::Rolling(ROLL_TIME_FRAMES))
                 .collect(),
         },
-        player_dice,
+        player_dice: player_dice.clone(),
     };
 
     let mut dice_display: Vec<_> = current_battle_state
         .rolled_dice
-        .rolls
-        .iter()
+        .faces_to_render(&player_dice)
         .enumerate()
-        .map(|(i, die)| {
-            let mut die_obj = obj.object(obj.sprite(FACE_SPRITES.sprite_for_face(die.face)));
+        .map(|(i, face)| {
+            let mut die_obj = obj.object(obj.sprite(FACE_SPRITES.sprite_for_face(face)));
 
             die_obj.set_y(120).set_x(i as u16 * 40 + 28).show();
 
@@ -133,7 +176,7 @@ pub(crate) fn battle_screen(agb: &mut Agb, player_dice: PlayerDice) {
 
     loop {
         counter = counter.wrapping_add(1);
-        current_battle_state.rolled_dice.update();
+        current_battle_state.rolled_dice.update(&player_dice);
 
         input.update();
 
@@ -162,11 +205,12 @@ pub(crate) fn battle_screen(agb: &mut Agb, player_dice: PlayerDice) {
         }
 
         // update the dice display to display the current values
-        for (die_obj, current_roll) in dice_display
-            .iter_mut()
-            .zip(current_battle_state.rolled_dice.rolls.iter())
-        {
-            die_obj.set_sprite(obj.sprite(FACE_SPRITES.sprite_for_face(current_roll.face)));
+        for (die_obj, current_roll) in dice_display.iter_mut().zip(
+            current_battle_state
+                .rolled_dice
+                .faces_to_render(&player_dice),
+        ) {
+            die_obj.set_sprite(obj.sprite(FACE_SPRITES.sprite_for_face(current_roll)));
         }
 
         select_box_obj
