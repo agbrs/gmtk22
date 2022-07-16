@@ -189,42 +189,6 @@ impl<'a> BattleScreenDisplay<'a> {
         obj: &'a ObjectController,
         current_battle_state: &CurrentBattleState,
     ) -> Vec<Action> {
-        let mut actions_to_apply = vec![];
-
-        // update the dice display to display the current values
-        for ((die_obj, (current_face, cooldown)), cooldown_healthbar) in self
-            .objs
-            .dice
-            .iter_mut()
-            .zip(current_battle_state.rolled_dice.faces_to_render())
-            .zip(self.objs.dice_cooldowns.iter_mut())
-        {
-            die_obj.set_sprite(obj.sprite(FACE_SPRITES.sprite_for_face(current_face)));
-
-            if let Some(cooldown) = cooldown {
-                cooldown_healthbar
-                    .set_value((cooldown * 24 / MALFUNCTION_COOLDOWN_FRAMES) as usize, obj);
-                cooldown_healthbar.show();
-            } else {
-                cooldown_healthbar.hide();
-            }
-        }
-
-        let mut animations_to_remove = vec![];
-        for (i, animation) in self.animations.iter_mut().enumerate() {
-            match animation.update(&mut self.objs, obj, current_battle_state) {
-                AnimationUpdateState::RemoveWithAction(a) => {
-                    actions_to_apply.push(a);
-                    animations_to_remove.push(i);
-                }
-                AnimationUpdateState::Continue => {}
-            }
-        }
-
-        for &animation_to_remove in animations_to_remove.iter().rev() {
-            self.animations.swap_remove(animation_to_remove);
-        }
-
         for (i, player_shield) in self.objs.player_shield.iter_mut().enumerate() {
             if i < current_battle_state.player.shield_count as usize {
                 player_shield.show();
@@ -267,6 +231,42 @@ impl<'a> BattleScreenDisplay<'a> {
 
         for (i, attack) in current_battle_state.attacks.iter().enumerate() {
             self.objs.enemy_attack_display[i].update(attack, obj);
+        }
+
+        let mut actions_to_apply = vec![];
+
+        // update the dice display to display the current values
+        for ((die_obj, (current_face, cooldown)), cooldown_healthbar) in self
+            .objs
+            .dice
+            .iter_mut()
+            .zip(current_battle_state.rolled_dice.faces_to_render())
+            .zip(self.objs.dice_cooldowns.iter_mut())
+        {
+            die_obj.set_sprite(obj.sprite(FACE_SPRITES.sprite_for_face(current_face)));
+
+            if let Some(cooldown) = cooldown {
+                cooldown_healthbar
+                    .set_value((cooldown * 24 / MALFUNCTION_COOLDOWN_FRAMES) as usize, obj);
+                cooldown_healthbar.show();
+            } else {
+                cooldown_healthbar.hide();
+            }
+        }
+
+        let mut animations_to_remove = vec![];
+        for (i, animation) in self.animations.iter_mut().enumerate() {
+            match animation.update(&mut self.objs, obj, current_battle_state) {
+                AnimationUpdateState::RemoveWithAction(a) => {
+                    actions_to_apply.push(a);
+                    animations_to_remove.push(i);
+                }
+                AnimationUpdateState::Continue => {}
+            }
+        }
+
+        for &animation_to_remove in animations_to_remove.iter().rev() {
+            self.animations.swap_remove(animation_to_remove);
         }
 
         actions_to_apply
@@ -313,6 +313,10 @@ impl<'a> EnemyAttackDisplay<'a> {
 
 enum AnimationState<'a> {
     PlayerShoot { bullet: Object<'a>, x: i32 },
+    PlayerActivateShield { amount: u32, frame: usize },
+    EnemyShoot { bullet: Object<'a>, x: i32 },
+    EnemyShield { amount: u32, frame: usize },
+    EnemyHeal {},
 }
 
 struct AnimationStateHolder<'a> {
@@ -328,15 +332,20 @@ enum AnimationUpdateState {
 impl<'a> AnimationStateHolder<'a> {
     fn for_action(a: Action, obj: &'a ObjectController) -> Self {
         let state = match a {
-            Action::PlayerActivateShield { .. } => todo!(),
+            Action::PlayerActivateShield { amount, .. } => {
+                AnimationState::PlayerActivateShield { amount, frame: 0 }
+            }
             Action::PlayerShoot { .. } => AnimationState::PlayerShoot {
                 bullet: obj.object(obj.sprite(BULLET_SPRITE)),
                 x: 64,
             },
             Action::PlayerDisrupt { .. } => todo!(),
-            Action::EnemyShoot { .. } => todo!(),
-            Action::EnemyShield { .. } => todo!(),
-            Action::EnemyHeal { .. } => todo!(),
+            Action::EnemyShoot { .. } => AnimationState::EnemyShoot {
+                bullet: obj.object(obj.sprite(BULLET_SPRITE)),
+                x: 175,
+            },
+            Action::EnemyShield { amount, .. } => AnimationState::EnemyShield { amount, frame: 0 },
+            Action::EnemyHeal { .. } => AnimationState::EnemyHeal {},
         };
 
         Self { action: a, state }
@@ -348,6 +357,72 @@ impl<'a> AnimationStateHolder<'a> {
         obj: &'a ObjectController,
         current_battle_state: &CurrentBattleState,
     ) -> AnimationUpdateState {
-        AnimationUpdateState::RemoveWithAction(self.action.clone())
+        match &mut self.state {
+            AnimationState::PlayerShoot { bullet, x } => {
+                bullet.show().set_x(*x as u16).set_y(36);
+                *x += 4;
+
+                if *x > 180 {
+                    AnimationUpdateState::RemoveWithAction(self.action.clone())
+                } else {
+                    AnimationUpdateState::Continue
+                }
+            }
+            AnimationState::PlayerActivateShield { amount, frame } => {
+                // find all the shields that need animating
+                let current_player_shields = current_battle_state.player.shield_count;
+                if current_player_shields < *amount {
+                    for i in current_player_shields..*amount {
+                        objs.player_shield[i as usize]
+                            .show()
+                            .set_sprite(obj.sprite(SHIELD.sprite(3 - *frame / 2)));
+                    }
+                } else {
+                    return AnimationUpdateState::RemoveWithAction(self.action.clone());
+                }
+
+                *frame += 1;
+
+                if *frame >= 6 {
+                    AnimationUpdateState::RemoveWithAction(self.action.clone())
+                } else {
+                    AnimationUpdateState::Continue
+                }
+            }
+            AnimationState::EnemyShoot { bullet, x } => {
+                bullet.show().set_hflip(true).set_x(*x as u16).set_y(36);
+                *x -= 4;
+
+                if *x < 50 {
+                    AnimationUpdateState::RemoveWithAction(self.action.clone())
+                } else {
+                    AnimationUpdateState::Continue
+                }
+            }
+            AnimationState::EnemyShield { amount, frame } => {
+                // find all the shields that need animating
+                let current_enemy_shields = current_battle_state.enemy.shield_count;
+                if current_enemy_shields < *amount {
+                    for i in current_enemy_shields..*amount {
+                        objs.enemy_shield[i as usize]
+                            .show()
+                            .set_sprite(obj.sprite(SHIELD.sprite(3 - *frame / 2)));
+                    }
+                } else {
+                    return AnimationUpdateState::RemoveWithAction(self.action.clone());
+                }
+
+                *frame += 1;
+
+                if *frame > 6 {
+                    AnimationUpdateState::RemoveWithAction(self.action.clone())
+                } else {
+                    AnimationUpdateState::Continue
+                }
+            }
+            AnimationState::EnemyHeal {} => {
+                AnimationUpdateState::RemoveWithAction(self.action.clone()) // TODO: Animation for healing
+            }
+        }
     }
 }

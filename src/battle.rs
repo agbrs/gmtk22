@@ -315,12 +315,37 @@ impl CurrentBattleState {
 
     fn apply_action(&mut self, action: Action) -> Option<Action> {
         match action {
-            Action::PlayerActivateShield { amount } => todo!(),
-            Action::PlayerShoot { damage, piercing } => todo!(),
+            Action::PlayerActivateShield { amount } => {
+                self.player.shield_count = self.player.shield_count.max(amount);
+                None
+            }
+            Action::PlayerShoot { damage, piercing } => {
+                if self.enemy.shield_count <= piercing {
+                    self.enemy.health = self.enemy.health.saturating_sub(damage);
+                } else if self.enemy.shield_count <= damage {
+                    self.enemy.shield_count = 0; // TODO: Dispatch action of drop shield to animate that
+                }
+
+                None
+            }
             Action::PlayerDisrupt { amount } => todo!(),
-            Action::EnemyShoot { damage } => todo!(),
-            Action::EnemyShield { amount } => todo!(),
-            Action::EnemyHeal { amount } => todo!(),
+            Action::EnemyShoot { damage } => {
+                if self.player.shield_count == 0 {
+                    self.player.health = self.player.health.saturating_sub(damage);
+                } else if self.player.shield_count <= damage {
+                    self.player.shield_count = 0; // TODO: Dispatch action of drop shield to animate that
+                }
+
+                None
+            }
+            Action::EnemyShield { amount } => {
+                self.enemy.shield_count = self.enemy.shield_count.max(amount);
+                None
+            }
+            Action::EnemyHeal { amount } => {
+                self.enemy.health = self.enemy.max_health.min(self.enemy.health + amount);
+                None
+            }
         }
     }
 }
