@@ -361,38 +361,6 @@ pub(crate) fn battle_screen(agb: &mut Agb, player_dice: PlayerDice, current_leve
 
     let mut battle_screen_display = BattleScreenDisplay::new(obj, &current_battle_state);
 
-    let player_healthbar_x = 18;
-    let enemy_healthbar_x = 180;
-    let mut player_healthbar = HealthBar::new(
-        (player_healthbar_x, player_y - 8).into(),
-        HEALTH_BAR_WIDTH,
-        obj,
-    );
-    let mut enemy_healthbar = HealthBar::new(
-        (enemy_healthbar_x, player_y - 8).into(),
-        HEALTH_BAR_WIDTH,
-        obj,
-    );
-
-    let mut player_health_display = FractionDisplay::new(
-        (
-            player_healthbar_x + HEALTH_BAR_WIDTH as u16 / 2 - 16,
-            player_y,
-        )
-            .into(),
-        3,
-        obj,
-    );
-    let mut enemy_health_display = FractionDisplay::new(
-        (
-            enemy_healthbar_x + HEALTH_BAR_WIDTH as u16 / 2 - 16,
-            player_y,
-        )
-            .into(),
-        3,
-        obj,
-    );
-
     let mut enemy_attack_display: Vec<_> = (0..2)
         .into_iter()
         .map(|i| {
@@ -455,29 +423,6 @@ pub(crate) fn battle_screen(agb: &mut Agb, player_dice: PlayerDice, current_leve
         }
 
         battle_screen_display.update(obj, &current_battle_state);
-
-        player_healthbar.set_value(
-            ((current_battle_state.player.health * HEALTH_BAR_WIDTH as u32)
-                / current_battle_state.player.max_health) as usize,
-            obj,
-        );
-
-        enemy_healthbar.set_value(
-            ((current_battle_state.enemy.health * HEALTH_BAR_WIDTH as u32)
-                / current_battle_state.enemy.max_health) as usize,
-            obj,
-        );
-
-        player_health_display.set_value(
-            current_battle_state.player.health as usize,
-            current_battle_state.player.max_health as usize,
-            obj,
-        );
-        enemy_health_display.set_value(
-            current_battle_state.enemy.health as usize,
-            current_battle_state.enemy.max_health as usize,
-            obj,
-        );
 
         for (i, attack) in current_battle_state.attacks.iter().enumerate() {
             let attack_display = &mut enemy_attack_display[i];

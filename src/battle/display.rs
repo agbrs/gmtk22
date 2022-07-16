@@ -2,7 +2,7 @@ use agb::display::object::{Object, ObjectController};
 use alloc::vec::Vec;
 
 use crate::{
-    graphics::{HealthBar, FACE_SPRITES, SHIP_SPRITES},
+    graphics::{FractionDisplay, HealthBar, FACE_SPRITES, SHIP_SPRITES},
     Ship,
 };
 
@@ -13,7 +13,14 @@ pub struct BattleScreenDisplay<'a> {
     dice_cooldowns: Vec<HealthBar<'a>>,
     player_shield: Vec<Object<'a>>,
     enemy_shield: Vec<Object<'a>>,
+
+    player_healthbar: HealthBar<'a>,
+    enemy_healthbar: HealthBar<'a>,
+    player_health: FractionDisplay<'a>,
+    enemy_health: FractionDisplay<'a>,
 }
+
+const HEALTH_BAR_WIDTH: usize = 48;
 
 impl<'a> BattleScreenDisplay<'a> {
     pub fn new(obj: &'a ObjectController, current_battle_state: &CurrentBattleState) -> Self {
@@ -74,11 +81,48 @@ impl<'a> BattleScreenDisplay<'a> {
             })
             .collect();
 
+        let player_healthbar_x = 18;
+        let enemy_healthbar_x = 180;
+        let player_healthbar = HealthBar::new(
+            (player_healthbar_x, player_y - 8).into(),
+            HEALTH_BAR_WIDTH,
+            obj,
+        );
+        let enemy_healthbar = HealthBar::new(
+            (enemy_healthbar_x, player_y - 8).into(),
+            HEALTH_BAR_WIDTH,
+            obj,
+        );
+
+        let player_health_display = FractionDisplay::new(
+            (
+                player_healthbar_x + HEALTH_BAR_WIDTH as u16 / 2 - 16,
+                player_y,
+            )
+                .into(),
+            3,
+            obj,
+        );
+        let enemy_health_display = FractionDisplay::new(
+            (
+                enemy_healthbar_x + HEALTH_BAR_WIDTH as u16 / 2 - 16,
+                player_y,
+            )
+                .into(),
+            3,
+            obj,
+        );
+
         Self {
             dice,
             dice_cooldowns,
             player_shield,
             enemy_shield,
+
+            player_healthbar,
+            enemy_healthbar,
+            player_health: player_health_display,
+            enemy_health: enemy_health_display,
         }
     }
 
@@ -116,5 +160,29 @@ impl<'a> BattleScreenDisplay<'a> {
                 player_shield.hide();
             }
         }
+
+        self.player_healthbar.set_value(
+            ((current_battle_state.player.health * HEALTH_BAR_WIDTH as u32)
+                / current_battle_state.player.max_health) as usize,
+            obj,
+        );
+
+        self.enemy_healthbar.set_value(
+            ((current_battle_state.enemy.health * HEALTH_BAR_WIDTH as u32)
+                / current_battle_state.enemy.max_health) as usize,
+            obj,
+        );
+
+        self.player_health.set_value(
+            current_battle_state.player.health as usize,
+            current_battle_state.player.max_health as usize,
+            obj,
+        );
+
+        self.enemy_health.set_value(
+            current_battle_state.enemy.health as usize,
+            current_battle_state.enemy.max_health as usize,
+            obj,
+        );
     }
 }
