@@ -63,6 +63,9 @@ pub enum Action {
     PlayerActivateShield { amount: u32 },
     PlayerShoot { damage: u32, piercing: u32 },
     PlayerDisrupt { amount: u32 },
+    EnemyShoot { damage: u32 },
+    EnemyShield { amount: u32 },
+    EnemyHeal { amount: u32 },
 }
 
 #[derive(Debug)]
@@ -213,39 +216,11 @@ pub enum EnemyAttack {
 }
 
 impl EnemyAttack {
-    fn apply_effect(
-        &self,
-        player_state: &mut PlayerState,
-        enemy_state: &mut EnemyState,
-    ) -> Option<Actions> {
+    fn apply_effect(&self) -> Action {
         match self {
-            EnemyAttack::Shoot(damage) => {
-                if *damage > player_state.shield_count {
-                    if player_state.shield_count > 0 {
-                        player_state.shield_count = 0;
-                        Some(Actions::EnemyBreakShield)
-                    } else {
-                        player_state.health = player_state.health.saturating_sub(*damage);
-                        Some(Actions::EnemyShootPlayer)
-                    }
-                } else {
-                    None
-                }
-            }
-            EnemyAttack::Shield(shield) => {
-                let should_animate = enemy_state.shield_count < *shield;
-                enemy_state.shield_count = enemy_state.shield_count.max(*shield);
-
-                if should_animate {
-                    Some(Actions::EnemyNewShield)
-                } else {
-                    None
-                }
-            }
-            EnemyAttack::Heal(amount) => {
-                enemy_state.health = enemy_state.max_health.min(enemy_state.health + amount);
-                Some(Actions::EnemyHeal)
-            }
+            EnemyAttack::Shoot(damage) => Action::EnemyShoot { damage: *damage },
+            EnemyAttack::Shield(shield) => Action::EnemyHeal { amount: *shield },
+            EnemyAttack::Heal(amount) => Action::EnemyHeal { amount: *amount },
         }
     }
 }
@@ -275,18 +250,14 @@ impl EnemyAttackState {
     }
 
     #[must_use]
-    fn update(
-        &mut self,
-        player_state: &mut PlayerState,
-        enemy_state: &mut EnemyState,
-    ) -> (Option<Actions>, bool) {
+    fn update(&mut self) -> Option<Action> {
         if self.cooldown == 0 {
-            return (self.attack.apply_effect(player_state, enemy_state), true);
+            return Some(self.attack.apply_effect());
         }
 
         self.cooldown -= 1;
 
-        (None, false)
+        None
     }
 }
 
@@ -317,16 +288,14 @@ impl CurrentBattleState {
             .roll_die(die_index, time, is_after_accept, &self.player_dice);
     }
 
-    fn update(&mut self) -> Vec<Actions> {
-        let mut animations = vec![];
+    fn update(&mut self) -> Vec<Action> {
+        let mut actions = vec![];
 
         for attack in self.attacks.iter_mut() {
             if let Some(attack_state) = attack {
-                if let (animation, true) = attack_state.update(&mut self.player, &mut self.enemy) {
+                if let Some(action) = attack_state.update() {
                     attack.take();
-                    if let Some(animation) = animation {
-                        animations.push(animation);
-                    }
+                    actions.push(action);
                 }
             } else if let Some(generated_attack) = generate_attack(self.current_level) {
                 attack.replace(EnemyAttackState {
@@ -337,7 +306,7 @@ impl CurrentBattleState {
             }
         }
 
-        animations
+        actions
     }
 
     fn update_dice(&mut self) {
@@ -391,7 +360,7 @@ pub(crate) fn battle_screen(agb: &mut Agb, player_dice: PlayerDice, current_leve
 
         if battle_screen_display.update(obj, &current_battle_state) {
             for animation in current_battle_state.update() {
-                battle_screen_display.add_animation(animation, obj);
+                // battle_screen_display.add_animation(animation, obj);
             }
         }
 
