@@ -150,7 +150,12 @@ fn main(mut gba: agb::Gba) -> ! {
     }
 
     loop {
-        dice = customise::customise_screen(&mut agb, dice.clone(), &mut card_descriptions);
+        dice = customise::customise_screen(
+            &mut agb,
+            dice.clone(),
+            &mut card_descriptions,
+            current_level,
+        );
 
         battle::battle_screen(&mut agb, dice.clone(), current_level);
 

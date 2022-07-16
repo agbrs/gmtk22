@@ -172,15 +172,26 @@ fn generate_upgrades(level: u32) -> Vec<Face> {
             + upgrade_values.get(&potential_upgrade).unwrap()
     };
 
-    let _ = rng::gen();
-    // let _ = rng::gen();
-
-    let max_upgrade_value = 10 + level as i32 * 3 + (rng::gen() % 10);
+    let max_upgrade_value = 10 + (rng::gen().rem_euclid(level as i32 * 5));
+    let mut attempts = 0;
 
     while upgrades.len() != 3 {
+        attempts += 1;
         let next = potential_upgrades[rng::gen() as usize % potential_upgrades.len()];
-        if upgrade_value(&upgrades, next) < max_upgrade_value {
+        if upgrade_value(&upgrades, next) < max_upgrade_value
+            && upgrades
+                .iter()
+                .chain(core::iter::once(&next))
+                .filter(|&x| *x == Face::Malfunction)
+                .count()
+                <= 1
+        {
             upgrades.push(next);
+            attempts = 0;
+        }
+
+        if attempts > 100 {
+            upgrades.clear();
         }
     }
 
@@ -191,6 +202,7 @@ pub(crate) fn customise_screen(
     agb: &mut Agb,
     mut player_dice: PlayerDice,
     descriptions_map: &mut RegularMap,
+    level: u32,
 ) -> PlayerDice {
     agb.sfx.customise();
     descriptions_map.set_scroll_pos((u16::MAX - 174, u16::MAX - 52).into());
@@ -207,7 +219,7 @@ pub(crate) fn customise_screen(
     let mut _net = create_net(&agb.obj, &player_dice.dice[0]);
     let mut _dice = create_dice_display(&agb.obj, &player_dice);
 
-    let mut upgrades = generate_upgrades(0);
+    let mut upgrades = generate_upgrades(level);
     let mut _upgrade_objects = create_upgrade_objects(&agb.obj, &upgrades);
 
     let mut input = agb::input::ButtonController::new();
