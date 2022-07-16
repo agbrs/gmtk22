@@ -1,6 +1,6 @@
 use agb::display::object::{Object, ObjectController};
+use alloc::vec;
 use alloc::vec::Vec;
-use alloc::{collections::VecDeque, vec};
 
 use crate::graphics::SHIELD;
 use crate::{
