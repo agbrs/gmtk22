@@ -136,8 +136,14 @@ impl EnemyAttack {
                 }
             }
             EnemyAttack::Shield(shield) => {
+                let should_animate = enemy_state.shield_count < *shield;
                 enemy_state.shield_count = enemy_state.shield_count.max(*shield);
-                Some(DisplayAnimation::EnemyNewShield)
+
+                if should_animate {
+                    Some(DisplayAnimation::EnemyNewShield)
+                } else {
+                    None
+                }
             }
             EnemyAttack::Heal(amount) => {
                 enemy_state.health = enemy_state.max_health.min(enemy_state.health + amount);
@@ -176,14 +182,14 @@ impl EnemyAttackState {
         &mut self,
         player_state: &mut PlayerState,
         enemy_state: &mut EnemyState,
-    ) -> Option<DisplayAnimation> {
+    ) -> (Option<DisplayAnimation>, bool) {
         if self.cooldown == 0 {
-            return self.attack.apply_effect(player_state, enemy_state);
+            return (self.attack.apply_effect(player_state, enemy_state), true);
         }
 
         self.cooldown -= 1;
 
-        None
+        (None, false)
     }
 }
 
@@ -307,9 +313,11 @@ impl CurrentBattleState {
 
         for attack in self.attacks.iter_mut() {
             if let Some(attack_state) = attack {
-                if let Some(animation) = attack_state.update(&mut self.player, &mut self.enemy) {
+                if let (animation, true) = attack_state.update(&mut self.player, &mut self.enemy) {
                     attack.take();
-                    animations.push(animation);
+                    if let Some(animation) = animation {
+                        animations.push(animation);
+                    }
                 }
             } else if let Some(generated_attack) = generate_attack(self.current_level) {
                 attack.replace(EnemyAttackState {
