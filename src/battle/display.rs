@@ -203,21 +203,6 @@ impl<'a> BattleScreenDisplay<'a> {
         obj: &'a ObjectController,
         current_battle_state: &CurrentBattleState,
     ) -> bool {
-        if self.current_animation.is_none() {
-            self.current_animation = self
-                .animations_to_play
-                .pop_front()
-                .map(|anim| AnimationState::for_animation(anim, obj));
-        }
-
-        if let Some(ref mut animation) = self.current_animation {
-            if animation.update(&mut self.objs, obj, current_battle_state) {
-                self.current_animation = None;
-            }
-
-            return false;
-        }
-
         // update the dice display to display the current values
         for ((die_obj, (current_face, cooldown)), cooldown_healthbar) in self
             .objs
@@ -235,6 +220,21 @@ impl<'a> BattleScreenDisplay<'a> {
             } else {
                 cooldown_healthbar.hide();
             }
+        }
+
+        if self.current_animation.is_none() {
+            self.current_animation = self
+                .animations_to_play
+                .pop_front()
+                .map(|anim| AnimationState::for_animation(anim, obj));
+        }
+
+        if let Some(ref mut animation) = self.current_animation {
+            if animation.update(&mut self.objs, obj, current_battle_state) {
+                self.current_animation = None;
+            }
+
+            return false;
         }
 
         for (i, player_shield) in self.objs.player_shield.iter_mut().enumerate() {

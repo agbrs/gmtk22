@@ -321,8 +321,6 @@ impl CurrentBattleState {
     }
 
     fn update(&mut self) -> Vec<DisplayAnimation> {
-        self.rolled_dice.update(&self.player_dice);
-
         let mut animations = vec![];
 
         for attack in self.attacks.iter_mut() {
@@ -343,6 +341,10 @@ impl CurrentBattleState {
         }
 
         animations
+    }
+
+    fn update_dice(&mut self) {
+        self.rolled_dice.update(&self.player_dice);
     }
 }
 
@@ -395,6 +397,8 @@ pub(crate) fn battle_screen(agb: &mut Agb, player_dice: PlayerDice, current_leve
                 battle_screen_display.add_animation(animation);
             }
         }
+
+        current_battle_state.update_dice();
 
         input.update();
 
