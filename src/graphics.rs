@@ -75,16 +75,17 @@ impl SmallSprites {
 }
 
 pub struct EnemyAttackSprites {
-    sprites: [&'static Sprite; 2],
+    sprites: [&'static Sprite; 3],
 }
 
 impl EnemyAttackSprites {
     const fn new() -> Self {
         const S_SHOOT: &Sprite = DICE_FACES.tags().get("enemy shoot").sprite(0);
         const S_SHIELD: &Sprite = DICE_FACES.tags().get("enemy shield").sprite(0);
+        const S_HEAL: &Sprite = DICE_FACES.tags().get("enemy heal").sprite(0);
 
         Self {
-            sprites: [S_SHOOT, S_SHIELD],
+            sprites: [S_SHOOT, S_SHIELD, S_HEAL],
         }
     }
 

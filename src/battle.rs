@@ -1,6 +1,8 @@
 use crate::{
-    graphics::{HealthBar, NumberDisplay, FACE_SPRITES, SELECT_BOX, SHIP_SPRITES},
-    Agb, Face, PlayerDice, Ship,
+    graphics::{
+        HealthBar, NumberDisplay, ENEMY_ATTACK_SPRITES, FACE_SPRITES, SELECT_BOX, SHIP_SPRITES,
+    },
+    Agb, EnemyAttackType, Face, PlayerDice, Ship,
 };
 use agb::{hash_map::HashMap, input::Button};
 use alloc::vec;
@@ -102,8 +104,9 @@ struct PlayerState {
 
 #[derive(Debug)]
 enum EnemyAttack {
-    Shoot(u16),
+    Shoot(u32),
     Shield,
+    Heal(u32),
 }
 
 #[derive(Debug)]
@@ -298,6 +301,22 @@ pub(crate) fn battle_screen(agb: &mut Agb, player_dice: PlayerDice) {
         3,
         obj,
     );
+
+    let mut enemy_attack_display: Vec<_> = (0..2)
+        .into_iter()
+        .map(|i| {
+            let mut attack_obj = obj.object(
+                obj.sprite(ENEMY_ATTACK_SPRITES.sprite_for_attack(EnemyAttackType::Attack)),
+            );
+
+            let attack_obj_position = (120, 56 + 32 * i).into();
+            attack_obj.set_position(attack_obj_position).hide();
+
+            let attack_cooldown = HealthBar::new(attack_obj_position + (32, 8).into(), 48, obj);
+
+            (attack_obj_position, attack_cooldown)
+        })
+        .collect();
 
     let mut selected_die = 0usize;
     let mut input = agb::input::ButtonController::new();

@@ -45,6 +45,7 @@ pub enum Ship {
 pub enum EnemyAttackType {
     Attack,
     Shield,
+    Heal,
 }
 
 #[derive(Debug, Clone)]
