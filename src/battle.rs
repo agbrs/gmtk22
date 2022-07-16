@@ -359,7 +359,7 @@ pub(crate) fn battle_screen(agb: &mut Agb, player_dice: PlayerDice, current_leve
         counter = counter.wrapping_add(1);
 
         if battle_screen_display.update(obj, &current_battle_state) {
-            for animation in current_battle_state.update() {
+            for action in current_battle_state.update() {
                 // battle_screen_display.add_animation(animation, obj);
             }
         }
