@@ -156,6 +156,7 @@ pub(crate) fn customise_screen(
     mut player_dice: PlayerDice,
     descriptions_map: &mut RegularMap,
 ) -> PlayerDice {
+    agb.sfx.customise();
     descriptions_map.set_scroll_pos((u16::MAX - 174, u16::MAX - 52).into());
 
     descriptions_map.show();

@@ -348,6 +348,8 @@ impl CurrentBattleState {
 }
 
 pub(crate) fn battle_screen(agb: &mut Agb, player_dice: PlayerDice, current_level: u32) {
+    agb.sfx.battle();
+
     let obj = &agb.obj;
 
     let mut select_box_obj = agb.obj.object(agb.obj.sprite(SELECT_BOX.sprite(0)));
