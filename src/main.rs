@@ -117,10 +117,14 @@ fn main(mut gba: agb::Gba) -> ! {
         dice: vec![basic_die; 5],
     };
 
+    let mut current_level = 0;
+
     loop {
         dice = customise::customise_screen(&mut agb, dice.clone());
 
-        battle::battle_screen(&mut agb, dice.clone());
+        battle::battle_screen(&mut agb, dice.clone(), current_level);
+
+        current_level += 1;
     }
 }
 

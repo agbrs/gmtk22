@@ -175,6 +175,7 @@ struct CurrentBattleState {
     rolled_dice: RolledDice,
     player_dice: PlayerDice,
     attacks: [Option<EnemyAttackState>; 2],
+    current_level: u32,
 }
 
 impl CurrentBattleState {
@@ -236,7 +237,7 @@ impl CurrentBattleState {
 
 const HEALTH_BAR_WIDTH: usize = 48;
 
-pub(crate) fn battle_screen(agb: &mut Agb, player_dice: PlayerDice) {
+pub(crate) fn battle_screen(agb: &mut Agb, player_dice: PlayerDice, current_level: u32) {
     let obj = &agb.obj;
 
     let player_sprite = SHIP_SPRITES.sprite_for_ship(Ship::Player);
@@ -279,6 +280,7 @@ pub(crate) fn battle_screen(agb: &mut Agb, player_dice: PlayerDice) {
         },
         player_dice: player_dice.clone(),
         attacks: [None, None],
+        current_level,
     };
 
     let mut dice_display: Vec<_> = current_battle_state
