@@ -2,11 +2,13 @@ use agb::display::object::{Object, ObjectController};
 use alloc::vec::Vec;
 
 use crate::{
-    graphics::{FractionDisplay, HealthBar, FACE_SPRITES, SHIP_SPRITES},
-    Ship,
+    graphics::{
+        FractionDisplay, HealthBar, NumberDisplay, ENEMY_ATTACK_SPRITES, FACE_SPRITES, SHIP_SPRITES,
+    },
+    EnemyAttackType, Ship,
 };
 
-use super::{CurrentBattleState, MALFUNCTION_COOLDOWN_FRAMES};
+use super::{CurrentBattleState, EnemyAttackState, MALFUNCTION_COOLDOWN_FRAMES};
 
 pub struct BattleScreenDisplay<'a> {
     dice: Vec<Object<'a>>,
@@ -18,6 +20,8 @@ pub struct BattleScreenDisplay<'a> {
     enemy_healthbar: HealthBar<'a>,
     player_health: FractionDisplay<'a>,
     enemy_health: FractionDisplay<'a>,
+
+    enemy_attack_display: Vec<EnemyAttackDisplay<'a>>,
 }
 
 const HEALTH_BAR_WIDTH: usize = 48;
@@ -113,6 +117,27 @@ impl<'a> BattleScreenDisplay<'a> {
             obj,
         );
 
+        let enemy_attack_display = (0..2)
+            .into_iter()
+            .map(|i| {
+                let mut attack_obj = obj.object(
+                    obj.sprite(ENEMY_ATTACK_SPRITES.sprite_for_attack(EnemyAttackType::Attack)),
+                );
+
+                let attack_obj_position = (120, 56 + 32 * i).into();
+                attack_obj.set_position(attack_obj_position).hide();
+
+                let mut attack_cooldown =
+                    HealthBar::new(attack_obj_position + (32, 8).into(), 48, obj);
+                attack_cooldown.hide();
+
+                let attack_number_display =
+                    NumberDisplay::new(attack_obj_position - (8, -10).into());
+
+                EnemyAttackDisplay::new(attack_obj, attack_cooldown, attack_number_display)
+            })
+            .collect();
+
         Self {
             dice,
             dice_cooldowns,
@@ -123,6 +148,8 @@ impl<'a> BattleScreenDisplay<'a> {
             enemy_healthbar,
             player_health: player_health_display,
             enemy_health: enemy_health_display,
+
+            enemy_attack_display,
         }
     }
 
@@ -184,5 +211,42 @@ impl<'a> BattleScreenDisplay<'a> {
             current_battle_state.enemy.max_health as usize,
             obj,
         );
+
+        for (i, attack) in current_battle_state.attacks.iter().enumerate() {
+            self.enemy_attack_display[i].update(attack, obj);
+        }
+    }
+}
+
+struct EnemyAttackDisplay<'a> {
+    face: Object<'a>,
+    cooldown: HealthBar<'a>,
+    number: NumberDisplay<'a>,
+}
+
+impl<'a> EnemyAttackDisplay<'a> {
+    pub fn new(face: Object<'a>, cooldown: HealthBar<'a>, number: NumberDisplay<'a>) -> Self {
+        Self {
+            face,
+            cooldown,
+            number,
+        }
+    }
+
+    pub fn update(&mut self, attack: &Option<EnemyAttackState>, obj: &'a ObjectController) {
+        if let Some(attack) = attack {
+            self.face.show().set_sprite(
+                obj.sprite(ENEMY_ATTACK_SPRITES.sprite_for_attack(attack.attack_type())),
+            );
+            self.cooldown
+                .set_value((attack.cooldown * 48 / attack.max_cooldown) as usize, obj);
+            self.cooldown.show();
+
+            self.number.set_value(attack.value_to_show(), obj);
+        } else {
+            self.face.hide();
+            self.cooldown.hide();
+            self.number.set_value(None, obj);
+        }
     }
 }

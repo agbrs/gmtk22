@@ -313,8 +313,6 @@ impl CurrentBattleState {
     }
 }
 
-const HEALTH_BAR_WIDTH: usize = 48;
-
 pub(crate) fn battle_screen(agb: &mut Agb, player_dice: PlayerDice, current_level: u32) {
     let obj = &agb.obj;
 
@@ -361,25 +359,6 @@ pub(crate) fn battle_screen(agb: &mut Agb, player_dice: PlayerDice, current_leve
 
     let mut battle_screen_display = BattleScreenDisplay::new(obj, &current_battle_state);
 
-    let mut enemy_attack_display: Vec<_> = (0..2)
-        .into_iter()
-        .map(|i| {
-            let mut attack_obj = obj.object(
-                obj.sprite(ENEMY_ATTACK_SPRITES.sprite_for_attack(EnemyAttackType::Attack)),
-            );
-
-            let attack_obj_position = (120, 56 + 32 * i).into();
-            attack_obj.set_position(attack_obj_position).hide();
-
-            let mut attack_cooldown = HealthBar::new(attack_obj_position + (32, 8).into(), 48, obj);
-            attack_cooldown.hide();
-
-            let attack_number_display = NumberDisplay::new(attack_obj_position - (8, -10).into());
-
-            (attack_obj, attack_cooldown, attack_number_display)
-        })
-        .collect();
-
     let mut enemy_bullet_obj = obj.object(obj.sprite(BULLET_SPRITE));
     enemy_bullet_obj.hide().set_hflip(true);
 
@@ -423,26 +402,6 @@ pub(crate) fn battle_screen(agb: &mut Agb, player_dice: PlayerDice, current_leve
         }
 
         battle_screen_display.update(obj, &current_battle_state);
-
-        for (i, attack) in current_battle_state.attacks.iter().enumerate() {
-            let attack_display = &mut enemy_attack_display[i];
-
-            if let Some(attack) = attack {
-                attack_display.0.show().set_sprite(
-                    obj.sprite(ENEMY_ATTACK_SPRITES.sprite_for_attack(attack.attack_type())),
-                );
-                attack_display
-                    .1
-                    .set_value((attack.cooldown * 48 / attack.max_cooldown) as usize, obj);
-                attack_display.1.show();
-
-                attack_display.2.set_value(attack.value_to_show(), obj);
-            } else {
-                attack_display.0.hide();
-                attack_display.1.hide();
-                attack_display.2.set_value(None, obj);
-            }
-        }
 
         select_box_obj
             .set_y(120 - 4)
