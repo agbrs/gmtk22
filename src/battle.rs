@@ -1,6 +1,6 @@
 use crate::{
     graphics::{
-        HealthBar, NumberDisplay, ENEMY_ATTACK_SPRITES, FACE_SPRITES, SELECT_BOX, SHIP_SPRITES,
+        FractionDisplay, HealthBar, ENEMY_ATTACK_SPRITES, FACE_SPRITES, SELECT_BOX, SHIP_SPRITES,
     },
     level_generation::generate_attack,
     Agb, EnemyAttackType, Face, PlayerDice, Ship,
@@ -349,7 +349,7 @@ pub(crate) fn battle_screen(agb: &mut Agb, player_dice: PlayerDice, current_leve
         obj,
     );
 
-    let mut player_health_display = NumberDisplay::new(
+    let mut player_health_display = FractionDisplay::new(
         (
             player_healthbar_x + HEALTH_BAR_WIDTH as u16 / 2 - 16,
             player_y,
@@ -358,7 +358,7 @@ pub(crate) fn battle_screen(agb: &mut Agb, player_dice: PlayerDice, current_leve
         3,
         obj,
     );
-    let mut enemy_health_display = NumberDisplay::new(
+    let mut enemy_health_display = FractionDisplay::new(
         (
             enemy_healthbar_x + HEALTH_BAR_WIDTH as u16 / 2 - 16,
             player_y,

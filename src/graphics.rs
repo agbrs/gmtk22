@@ -146,7 +146,7 @@ impl<'a> HealthBar<'a> {
     }
 }
 
-pub struct NumberDisplay<'a> {
+pub struct FractionDisplay<'a> {
     sprites: Vec<Object<'a>>,
     digits: usize,
 
@@ -154,7 +154,7 @@ pub struct NumberDisplay<'a> {
     current_max: usize,
 }
 
-impl<'a> NumberDisplay<'a> {
+impl<'a> FractionDisplay<'a> {
     pub fn new(pos: Vector2D<i32>, digits: usize, obj: &'a ObjectController) -> Self {
         let mut sprites = Vec::with_capacity(digits * 2 + 1);
 
