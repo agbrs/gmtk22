@@ -211,7 +211,9 @@ pub struct CurrentBattleState {
 }
 
 impl CurrentBattleState {
-    fn accept_rolls(&mut self) {
+    fn accept_rolls(&mut self) -> Vec<DisplayAnimation> {
+        let mut animations = vec![];
+
         let mut face_counts: HashMap<Face, u32> = HashMap::new();
         for face in self.rolled_dice.faces_for_accepting() {
             match face {
@@ -223,7 +225,11 @@ impl CurrentBattleState {
 
         // shield
         let shield = face_counts.entry(Face::Shield).or_default();
-        self.player.shield_count = self.player.shield_count.max(*shield);
+
+        if *shield > self.player.shield_count {
+            self.player.shield_count = *shield;
+            animations.push(DisplayAnimation::PlayerNewShield);
+        }
 
         // shooting
         let shoot = *face_counts.entry(Face::Shoot).or_default();
@@ -240,6 +246,12 @@ impl CurrentBattleState {
                 self.enemy.shield_count = 0;
                 self.enemy.health = self.enemy.health.saturating_sub(shoot_power);
             }
+
+            if self.enemy.shield_count > 0 {
+                animations.push(DisplayAnimation::PlayerBreakShield);
+            } else {
+                animations.push(DisplayAnimation::PlayerShootEnemy);
+            }
         }
 
         // disrupt
@@ -248,6 +260,7 @@ impl CurrentBattleState {
         let disrupt_power = (disrupt * (disrupt + 1)) / 2;
         for a in self.attacks.iter_mut().flatten() {
             a.cooldown += disrupt_power * 60;
+            // TODO: disrupt animation
         }
 
         let mut malfunction_all = false;
@@ -289,6 +302,8 @@ impl CurrentBattleState {
         for i in 0..self.player_dice.dice.len() {
             self.roll_die(i, ROLL_TIME_FRAMES_ALL, true);
         }
+
+        animations
     }
 
     fn roll_die(&mut self, die_index: usize, time: u32, is_after_accept: bool) {
@@ -402,7 +417,9 @@ pub(crate) fn battle_screen(agb: &mut Agb, player_dice: PlayerDice, current_leve
         }
 
         if input.is_just_pressed(Button::START) {
-            current_battle_state.accept_rolls();
+            for animation in current_battle_state.accept_rolls() {
+                battle_screen_display.add_animation(animation);
+            }
             agb.sfx.roll_multi();
         }
 

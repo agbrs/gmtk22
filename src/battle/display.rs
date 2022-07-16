@@ -347,15 +347,24 @@ enum AnimationState<'a> {
     EnemyNewShield {
         shield_frame: i32,
     },
+    EnemyHeal {
+        heal_frame: i32,
+    },
 }
 
 impl<'a> AnimationState<'a> {
     fn for_animation(a: DisplayAnimation, obj: &'a ObjectController) -> Self {
         match a {
             DisplayAnimation::PlayerShootEnemy => Self::PlayerShootEnemy {
-                x_position: 88,
+                x_position: 64,
                 bullet: obj.object(obj.sprite(BULLET_SPRITE)),
             },
+            DisplayAnimation::PlayerBreakShield => Self::PlayerBreakShield {
+                bullet: obj.object(obj.sprite(BULLET_SPRITE)),
+                x_position: 64,
+                shield_break_frame: 0,
+            },
+            DisplayAnimation::PlayerNewShield => Self::PlayerNewShield { shield_frame: 3 },
             DisplayAnimation::EnemyShootPlayer => Self::EnemyShootPlayer {
                 bullet: obj.object(obj.sprite(BULLET_SPRITE)),
                 x_position: 176,
@@ -366,7 +375,7 @@ impl<'a> AnimationState<'a> {
                 shield_break_frame: 0,
             },
             DisplayAnimation::EnemyNewShield => Self::EnemyNewShield { shield_frame: 6 },
-            _ => Self::PlayerNewShield { shield_frame: 0 },
+            DisplayAnimation::EnemyHeal => AnimationState::EnemyHeal { heal_frame: 0 },
         }
     }
 
@@ -378,10 +387,44 @@ impl<'a> AnimationState<'a> {
     ) -> bool {
         match self {
             Self::PlayerShootEnemy { bullet, x_position } => {
-                bullet.set_x(*x_position as u16).set_y(30).show();
+                bullet.set_x(*x_position as u16).set_y(36).show();
                 *x_position += 2;
 
-                *x_position > 180
+                *x_position > 190
+            }
+            Self::PlayerBreakShield {
+                bullet,
+                x_position,
+                shield_break_frame,
+            } => {
+                if *x_position > 190 {
+                    if *shield_break_frame >= 12 {
+                        for shield_obj in objs.enemy_shield.iter_mut() {
+                            shield_obj.set_sprite(obj.sprite(SHIELD.sprite(0)));
+                        }
+                        true
+                    } else {
+                        for shield_obj in objs.enemy_shield.iter_mut() {
+                            shield_obj.set_sprite(
+                                obj.sprite(SHIELD.sprite((*shield_break_frame / 2) as usize)),
+                            );
+                        }
+                        false
+                    }
+                } else {
+                    bullet.set_x(*x_position as u16).set_y(36).show();
+                    *x_position += 2;
+
+                    false
+                }
+            }
+            Self::PlayerNewShield { shield_frame } => {
+                objs.player_shield[(current_battle_state.player.shield_count - 1) as usize]
+                    .show()
+                    .set_sprite(obj.sprite(SHIELD.sprite(*shield_frame as usize / 2)));
+
+                *shield_frame -= 1;
+                *shield_frame == 0
             }
             Self::EnemyShootPlayer { bullet, x_position } => {
                 bullet
