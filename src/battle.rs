@@ -239,7 +239,7 @@ impl CurrentBattleState {
             .shield_count
             .saturating_sub(*face_counts.entry(Face::Bypass).or_default());
 
-        if shoot_power > enemy_shield_equiv {
+        if shoot_power >= enemy_shield_equiv {
             if enemy_shield_equiv > 0 {
                 self.enemy.shield_count = 0;
             } else {
