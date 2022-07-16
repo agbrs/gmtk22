@@ -169,8 +169,10 @@ pub(crate) fn battle_screen(agb: &mut Agb, player_dice: PlayerDice) {
     let mut enemy_obj = obj.object(obj.sprite(enemy_sprite));
 
     let player_x = 12;
+    let enemy_x = 167;
+
     player_obj.set_x(player_x).set_y(16).set_z(1).show();
-    enemy_obj.set_x(167).set_y(16).set_z(1).show();
+    enemy_obj.set_x(enemy_x).set_y(16).set_z(1).show();
 
     let mut select_box_obj = agb.obj.object(agb.obj.sprite(SELECT_BOX.sprite(0)));
     select_box_obj.show();
@@ -236,7 +238,7 @@ pub(crate) fn battle_screen(agb: &mut Agb, player_dice: PlayerDice) {
         .map(|i| {
             let mut shield_obj = obj.object(obj.sprite(shield_sprite));
             shield_obj
-                .set_x(167 - 16 - 11 * i)
+                .set_x(enemy_x - 16 - 11 * i)
                 .set_y(16)
                 .set_hflip(true)
                 .hide();
