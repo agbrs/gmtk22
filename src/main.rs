@@ -130,15 +130,7 @@ fn main(mut gba: agb::Gba) -> ! {
     mixer.enable();
     let _interrupt_handler = mixer.setup_interrupt_handler();
 
-    let sfx = Sfx::new(&mut mixer);
-
-    let mut agb = Agb {
-        obj: gfx,
-        vblank,
-        star_background,
-        vram,
-        sfx,
-    };
+    let mut sfx = Sfx::new(&mut mixer);
 
     let mut input = agb::input::ButtonController::new();
     loop {
@@ -147,7 +139,16 @@ fn main(mut gba: agb::Gba) -> ! {
         if input.is_just_pressed(agb::input::Button::all()) {
             break;
         }
+        sfx.frame();
     }
+
+    let mut agb = Agb {
+        obj: gfx,
+        vblank,
+        star_background,
+        vram,
+        sfx,
+    };
 
     loop {
         dice = customise::customise_screen(
