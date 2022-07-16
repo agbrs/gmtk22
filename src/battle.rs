@@ -1,5 +1,5 @@
 use crate::{
-    graphics::{FACE_SPRITES, SELECT_BOX, SHIP_SPRITES},
+    graphics::{HealthBar, FACE_SPRITES, SELECT_BOX, SHIP_SPRITES},
     Agb, Face, PlayerDice, Ship,
 };
 use agb::{hash_map::HashMap, input::Button};
@@ -88,12 +88,14 @@ impl RolledDice {
 struct PlayerState {
     shield_count: u32,
     health: u32,
+    max_health: u32,
 }
 
 #[derive(Debug)]
 struct EnemyState {
     shield_count: u32,
     health: u32,
+    max_health: u32,
 }
 
 #[derive(Debug)]
@@ -133,6 +135,8 @@ impl CurrentBattleState {
     }
 }
 
+const HEALTH_BAR_WIDTH: usize = 48;
+
 pub(crate) fn battle_screen(agb: &mut Agb, player_dice: PlayerDice) {
     let obj = &agb.obj;
 
@@ -156,11 +160,13 @@ pub(crate) fn battle_screen(agb: &mut Agb, player_dice: PlayerDice) {
     let mut current_battle_state = CurrentBattleState {
         player: PlayerState {
             shield_count: 0,
-            health: 100,
+            health: 58,
+            max_health: 120,
         },
         enemy: EnemyState {
             shield_count: 5,
-            health: 20,
+            health: 38,
+            max_health: 50,
         },
         rolled_dice: RolledDice {
             rolls: player_dice
@@ -208,6 +214,9 @@ pub(crate) fn battle_screen(agb: &mut Agb, player_dice: PlayerDice) {
             shield_obj
         })
         .collect();
+
+    let mut player_healthbar = HealthBar::new((32, 8).into(), HEALTH_BAR_WIDTH, obj);
+    let mut enemy_healthbar = HealthBar::new((160, 8).into(), HEALTH_BAR_WIDTH, obj);
 
     let mut selected_die = 0usize;
     let mut input = agb::input::ButtonController::new();
@@ -266,6 +275,18 @@ pub(crate) fn battle_screen(agb: &mut Agb, player_dice: PlayerDice) {
                 player_shield.hide();
             }
         }
+
+        player_healthbar.set_value(
+            ((current_battle_state.player.health * HEALTH_BAR_WIDTH as u32)
+                / current_battle_state.player.max_health) as usize,
+            obj,
+        );
+
+        enemy_healthbar.set_value(
+            ((current_battle_state.enemy.health * HEALTH_BAR_WIDTH as u32)
+                / current_battle_state.enemy.max_health) as usize,
+            obj,
+        );
 
         select_box_obj
             .set_y(120 - 4)

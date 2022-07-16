@@ -1,4 +1,8 @@
-use agb::display::object::{Sprite, Tag};
+use agb::{
+    display::object::{Object, ObjectController, Sprite, Tag},
+    fixnum::Vector2D,
+};
+use alloc::vec::Vec;
 
 use crate::{Face, Ship};
 
@@ -56,15 +60,55 @@ impl ShipSprites {
 pub struct SmallSprites;
 
 impl SmallSprites {
-    pub const fn number(i: u32) -> &'static Sprite {
+    pub const fn number(&self, i: u32) -> &'static Sprite {
         SMALL_SPRITES_GFX.tags().get("numbers").sprite(i as usize)
     }
 
-    pub const fn slash() -> &'static Sprite {
+    pub const fn slash(&self) -> &'static Sprite {
         SMALL_SPRITES_GFX.tags().get("numbers").sprite(10)
     }
 
-    pub const fn red_bar(i: usize) -> &'static Sprite {
+    pub const fn red_bar(&self, i: usize) -> &'static Sprite {
         SMALL_SPRITES_GFX.tags().get("red bar").sprite(i)
+    }
+}
+
+pub struct HealthBar<'a> {
+    max: usize,
+    sprites: Vec<Object<'a>>,
+}
+
+impl<'a> HealthBar<'a> {
+    pub fn new(pos: Vector2D<i32>, max: usize, obj: &'a ObjectController) -> Self {
+        assert_eq!(max % 8, 0);
+
+        let sprites = (0..(max / 8))
+            .into_iter()
+            .map(|i| {
+                let health_sprite = obj.sprite(SMALL_SPRITES.red_bar(0));
+
+                let mut health_object = obj.object(health_sprite);
+                health_object
+                    .set_position(pos + (i as i32 * 8, 0).into())
+                    .show();
+                health_object
+            })
+            .collect();
+
+        Self { max, sprites }
+    }
+
+    pub fn set_value(&mut self, new_value: usize, obj: &'a ObjectController) {
+        assert!(new_value <= self.max);
+
+        for (i, sprite) in self.sprites.iter_mut().enumerate() {
+            if (i + 1) * 8 < new_value {
+                sprite.set_sprite(obj.sprite(SMALL_SPRITES.red_bar(0)));
+            } else if i * 8 < new_value {
+                sprite.set_sprite(obj.sprite(SMALL_SPRITES.red_bar(new_value - i * 8)));
+            } else {
+                sprite.set_sprite(obj.sprite(SMALL_SPRITES.red_bar(8)));
+            }
+        }
     }
 }
