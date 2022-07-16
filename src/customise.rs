@@ -54,14 +54,14 @@ fn move_net_position_lr(idx: usize, direction: Tri) -> usize {
             if idx >= 4 {
                 2
             } else {
-                (idx + 1) % 4
+                (idx + 1) % 3
             }
         }
         Tri::Negative => {
             if idx >= 4 {
                 0
             } else {
-                idx.checked_sub(1).unwrap_or(3)
+                idx.checked_sub(1).unwrap_or(2)
             }
         }
     }
@@ -147,7 +147,7 @@ fn create_upgrade_objects<'a>(gfx: &'a ObjectController, upgrades: &[Face]) -> V
     objects
 }
 
-fn generate_upgrades(difficulty: u32) -> Vec<Face> {
+fn generate_upgrades(level: u32) -> Vec<Face> {
     vec![Face::DoubleShot, Face::TripleShot, Face::Bypass]
 }
 
