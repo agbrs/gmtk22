@@ -2,6 +2,7 @@ use agb::display::object::{Object, ObjectController};
 use alloc::vec::Vec;
 use alloc::{collections::VecDeque, vec};
 
+use crate::graphics::SHIELD;
 use crate::{
     graphics::{
         FractionDisplay, HealthBar, NumberDisplay, BULLET_SPRITE, ENEMY_ATTACK_SPRITES,
@@ -357,7 +358,12 @@ impl<'a> AnimationState<'a> {
             },
             DisplayAnimation::EnemyShootPlayer => Self::EnemyShootPlayer {
                 bullet: obj.object(obj.sprite(BULLET_SPRITE)),
-                x_position: 180,
+                x_position: 176,
+            },
+            DisplayAnimation::EnemyBreakShield => Self::EnemyBreakShield {
+                bullet: obj.object(obj.sprite(BULLET_SPRITE)),
+                x_position: 176,
+                shield_break_frame: 0,
             },
             _ => Self::PlayerNewShield { shield_frame: 0 },
         }
@@ -378,12 +384,43 @@ impl<'a> AnimationState<'a> {
             Self::EnemyShootPlayer { bullet, x_position } => {
                 bullet
                     .set_x(*x_position as u16)
-                    .set_y(30)
+                    .set_y(36)
                     .show()
                     .set_hflip(true);
                 *x_position -= 2;
 
-                *x_position < 88
+                *x_position < 48
+            }
+            Self::EnemyBreakShield {
+                bullet,
+                x_position,
+                shield_break_frame,
+            } => {
+                if *x_position < 48 {
+                    if *shield_break_frame >= 12 {
+                        for shield_obj in objs.player_shield.iter_mut() {
+                            shield_obj.set_sprite(obj.sprite(SHIELD.sprite(0)));
+                        }
+                        true
+                    } else {
+                        for shield_obj in objs.player_shield.iter_mut() {
+                            shield_obj.set_sprite(
+                                obj.sprite(SHIELD.sprite((*shield_break_frame / 2) as usize)),
+                            );
+                        }
+                        *shield_break_frame += 1;
+                        false
+                    }
+                } else {
+                    bullet
+                        .set_x(*x_position as u16)
+                        .set_y(36)
+                        .show()
+                        .set_hflip(true);
+                    *x_position -= 2;
+
+                    false
+                }
             }
             _ => true,
         }
