@@ -21,7 +21,7 @@ const MULTI_ROLLS: &[&[u8]] = &[
 const MENU_BGM: &[u8] = include_wav!("sfx/BGM_Fight.wav");
 const BATTLE_BGM: &[u8] = include_wav!("sfx/BGM_Menu.wav");
 
-const MAX_CROSSFADE_FRAMES: i16 = 128;
+const MAX_CROSSFADE_FRAMES: i16 = 1;
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum BattleOrMenu {
