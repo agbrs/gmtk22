@@ -30,6 +30,6 @@ fn generate_enemy_attack(current_level: u32) -> EnemyAttack {
     }
 }
 
-fn generate_cooldown(_current_level: u32) -> u32 {
-    rng::gen().rem_euclid(128) as u32 + 2 * 60
+fn generate_cooldown(current_level: u32) -> u32 {
+    rng::gen().rem_euclid((5 * 60 - current_level as i32 * 10).max(1)) as u32 + 2 * 60
 }
