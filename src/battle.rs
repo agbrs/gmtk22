@@ -1,4 +1,4 @@
-use crate::{Agb, Face, PlayerDice, FACE_SPRITES, SELECT_BOX, SHIP_SPRITES};
+use crate::{Agb, Face, PlayerDice, Ship, FACE_SPRITES, SELECT_BOX, SHIP_SPRITES};
 use agb::{hash_map::HashMap, input::Button};
 use alloc::vec::Vec;
 
@@ -88,7 +88,10 @@ struct PlayerState {
 }
 
 #[derive(Debug)]
-struct EnemyState {}
+struct EnemyState {
+    shield_count: u32,
+    health: u32,
+}
 
 #[derive(Debug)]
 struct CurrentBattleState {
@@ -128,15 +131,18 @@ impl CurrentBattleState {
 }
 
 pub(crate) fn battle_screen(agb: &mut Agb, player_dice: PlayerDice) {
-    let player_sprite = SHIP_SPRITES.sprites[0];
-    let enemy_sprite = SHIP_SPRITES.sprites[1];
-
     let obj = &agb.obj;
+
+    let player_sprite = SHIP_SPRITES.sprite_for_ship(Ship::Player);
+    let enemy_sprite = SHIP_SPRITES.sprite_for_ship(Ship::Drone);
+
+    let shield_sprite = SHIP_SPRITES.sprite_for_ship(Ship::Shield);
 
     let mut player_obj = obj.object(obj.sprite(player_sprite));
     let mut enemy_obj = obj.object(obj.sprite(enemy_sprite));
 
-    player_obj.set_x(27).set_y(16).set_z(1).show();
+    let player_x = 12;
+    player_obj.set_x(player_x).set_y(16).set_z(1).show();
     enemy_obj.set_x(167).set_y(16).set_z(1).show();
 
     let mut select_box_obj = agb.obj.object(agb.obj.sprite(SELECT_BOX.sprite(0)));
@@ -149,7 +155,10 @@ pub(crate) fn battle_screen(agb: &mut Agb, player_dice: PlayerDice) {
             shield_count: 0,
             health: 100,
         },
-        enemy: EnemyState {},
+        enemy: EnemyState {
+            shield_count: 5,
+            health: 20,
+        },
         rolled_dice: RolledDice {
             rolls: player_dice
                 .dice
@@ -170,6 +179,30 @@ pub(crate) fn battle_screen(agb: &mut Agb, player_dice: PlayerDice) {
             die_obj.set_y(120).set_x(i as u16 * 40 + 28).show();
 
             die_obj
+        })
+        .collect();
+
+    let mut player_shield_display: Vec<_> = (0..5)
+        .into_iter()
+        .map(|i| {
+            let mut shield_obj = obj.object(obj.sprite(shield_sprite));
+            shield_obj.set_x(player_x + 18 + 11 * i).set_y(16).hide();
+
+            shield_obj
+        })
+        .collect();
+
+    let mut enemy_shield_display: Vec<_> = (0..5)
+        .into_iter()
+        .map(|i| {
+            let mut shield_obj = obj.object(obj.sprite(shield_sprite));
+            shield_obj
+                .set_x(167 - 16 - 11 * i)
+                .set_y(16)
+                .set_hflip(true)
+                .hide();
+
+            shield_obj
         })
         .collect();
 
@@ -213,6 +246,22 @@ pub(crate) fn battle_screen(agb: &mut Agb, player_dice: PlayerDice) {
             .zip(current_battle_state.rolled_dice.faces_to_render())
         {
             die_obj.set_sprite(obj.sprite(FACE_SPRITES.sprite_for_face(current_roll)));
+        }
+
+        for (i, player_shield) in player_shield_display.iter_mut().enumerate() {
+            if i < current_battle_state.player.shield_count as usize {
+                player_shield.show();
+            } else {
+                player_shield.hide();
+            }
+        }
+
+        for (i, player_shield) in enemy_shield_display.iter_mut().enumerate() {
+            if i < current_battle_state.enemy.shield_count as usize {
+                player_shield.show();
+            } else {
+                player_shield.hide();
+            }
         }
 
         select_box_obj

@@ -60,18 +60,30 @@ impl FaceSprites {
     }
 }
 
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Hash)]
+enum Ship {
+    Player,
+    Drone,
+    Shield,
+}
+
 struct ShipSprites {
-    sprites: [&'static Sprite; 2],
+    sprites: [&'static Sprite; 3],
 }
 
 impl ShipSprites {
     const fn load_ship_sprites() -> Self {
         const S_PLAYER: &Sprite = SHIPS.tags().get("player").sprite(0);
         const S_DRONE: &Sprite = SHIPS.tags().get("drone").sprite(0);
+        const S_SHIELD: &Sprite = SHIPS.tags().get("shield").sprite(0);
 
         Self {
-            sprites: [S_PLAYER, S_DRONE],
+            sprites: [S_PLAYER, S_DRONE, S_SHIELD],
         }
+    }
+
+    fn sprite_for_ship(&self, ship: Ship) -> &'static Sprite {
+        self.sprites[ship as usize]
     }
 }
 
