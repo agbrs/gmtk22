@@ -21,18 +21,15 @@ include_gfx!("gfx/descriptions.toml");
 pub const DESCRIPTIONS_PALETTE: &Palette16 = &descriptions::descriptions.palettes[0];
 
 enum CustomiseState {
-    Dice {
-        dice: usize,
-    },
-    Face {
-        dice: usize,
-        face: usize,
-    },
-    Upgrade {
-        dice: usize,
-        face: usize,
-        upgrade: usize,
-    },
+    Dice,
+    Face,
+    Upgrade,
+}
+
+struct Cursor {
+    dice: usize,
+    face: usize,
+    upgrade: usize,
 }
 
 fn net_position_for_index(idx: usize) -> (u32, u32) {
@@ -189,7 +186,13 @@ pub(crate) fn customise_screen(
 
     let mut counter = 0usize;
 
-    let mut state = CustomiseState::Dice { dice: 0 };
+    let mut state = CustomiseState::Dice;
+
+    let mut cursor = Cursor {
+        dice: 0,
+        face: 1,
+        upgrade: 0,
+    };
 
     loop {
         counter = counter.wrapping_add(1);
@@ -206,62 +209,53 @@ pub(crate) fn customise_screen(
             .into();
 
         match &mut state {
-            CustomiseState::Dice { dice } => {
+            CustomiseState::Dice => {
                 selected_dice.hide();
-                let new_dice = (*dice as isize + lr as isize)
+                let new_dice = (cursor.dice as isize + lr as isize)
                     .rem_euclid(player_dice.dice.len() as isize)
                     as usize;
-                if new_dice != *dice {
-                    *dice = new_dice;
-                    _net = create_net(&agb.obj, &player_dice.dice[*dice]);
+                if new_dice != cursor.dice {
+                    cursor.dice = new_dice;
+                    _net = create_net(&agb.obj, &player_dice.dice[cursor.dice]);
                 }
 
-                select_box.set_x((*dice as i32 * 32 - 32 / 2 + 20) as u16);
+                select_box.set_x((cursor.dice as i32 * 32 - 32 / 2 + 20) as u16);
                 select_box.set_y(0);
 
                 if input.is_just_pressed(Button::A) {
-                    selected_dice.set_x((*dice as i32 * 32 - 32 / 2 + 20) as u16);
+                    selected_dice.set_x((cursor.dice as i32 * 32 - 32 / 2 + 20) as u16);
                     selected_dice.set_y(0);
                     selected_dice.show();
-                    state = CustomiseState::Face {
-                        dice: *dice,
-                        face: 1,
-                    }
+                    state = CustomiseState::Face;
                 }
             }
-            CustomiseState::Face { dice, face } => {
-                *face = move_net_position_lr(*face, lr);
-                *face = move_net_position_ud(*face, ud);
+            CustomiseState::Face => {
+                cursor.face = move_net_position_lr(cursor.face, lr);
+                cursor.face = move_net_position_ud(cursor.face, ud);
 
-                let (x, y) = screen_position_for_index(*face);
+                let (x, y) = screen_position_for_index(cursor.face);
                 select_box.set_x((x - 32 / 2) as u16);
                 select_box.set_y((y - 32 / 2) as u16);
                 selected_face.hide();
 
                 if input.is_just_pressed(Button::B) {
-                    state = CustomiseState::Dice { dice: *dice };
+                    state = CustomiseState::Dice;
                 } else if input.is_just_pressed(Button::A) && !upgrades.is_empty() {
                     selected_face.set_x((x - 32 / 2) as u16);
                     selected_face.set_y((y - 32 / 2) as u16);
                     selected_face.show();
 
-                    state = CustomiseState::Upgrade {
-                        dice: *dice,
-                        face: *face,
-                        upgrade: upgrades.len(),
-                    };
+                    cursor.upgrade += upgrades.len();
+
+                    state = CustomiseState::Upgrade;
                 }
             }
-            CustomiseState::Upgrade {
-                dice,
-                face,
-                upgrade,
-            } => {
-                let old_updade = *upgrade;
-                *upgrade =
-                    (*upgrade as isize + ud as isize).rem_euclid(upgrades.len() as isize) as usize;
+            CustomiseState::Upgrade => {
+                let old_updade = cursor.upgrade;
+                cursor.upgrade = (cursor.upgrade as isize + ud as isize)
+                    .rem_euclid(upgrades.len() as isize) as usize;
 
-                if *upgrade != old_updade {
+                if cursor.upgrade != old_updade {
                     for y in 0..11 {
                         for x in 0..8 {
                             descriptions_map.set_tile(
@@ -269,7 +263,7 @@ pub(crate) fn customise_screen(
                                 (x, y).into(),
                                 &descriptions_tileset,
                                 TileSetting::new(
-                                    y * 8 + x + 8 * 11 * upgrades[*upgrade] as u16,
+                                    y * 8 + x + 8 * 11 * upgrades[cursor.upgrade] as u16,
                                     false,
                                     false,
                                     1,
@@ -279,28 +273,26 @@ pub(crate) fn customise_screen(
                     }
                 }
 
-                let (x, y) = upgrade_position(*upgrade);
+                descriptions_map.show();
+
+                let (x, y) = upgrade_position(cursor.upgrade);
                 select_box.set_x((x - 32 / 2) as u16);
                 select_box.set_y((y - 32 / 2) as u16);
 
                 if input.is_just_pressed(Button::B) {
-                    state = CustomiseState::Face {
-                        dice: *dice,
-                        face: *face,
-                    };
+                    state = CustomiseState::Face;
                 } else if input.is_just_pressed(Button::A)
-                    && player_dice.dice[*dice].faces[*face] != upgrades[*upgrade]
+                    && player_dice.dice[cursor.dice].faces[cursor.face] != upgrades[cursor.upgrade]
                 {
-                    player_dice.dice[*dice].faces[*face] = upgrades[*upgrade];
-                    upgrades.remove(*upgrade);
+                    descriptions_map.hide();
+
+                    player_dice.dice[cursor.dice].faces[cursor.face] = upgrades[cursor.upgrade];
+                    upgrades.remove(cursor.upgrade);
                     _upgrade_objects = create_upgrade_objects(&agb.obj, &upgrades);
 
-                    _net = create_net(&agb.obj, &player_dice.dice[*dice]);
+                    _net = create_net(&agb.obj, &player_dice.dice[cursor.dice]);
                     _dice = create_dice_display(&agb.obj, &player_dice);
-                    state = CustomiseState::Face {
-                        dice: *dice,
-                        face: *face,
-                    };
+                    state = CustomiseState::Face;
                 }
             }
         }
