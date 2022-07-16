@@ -4,11 +4,12 @@ use agb::{
 };
 use alloc::vec::Vec;
 
-use crate::{Face, Ship};
+use crate::{EnemyAttackType, Face, Ship};
 
 const DICE_FACES: &agb::display::object::Graphics =
     agb::include_aseprite!("gfx/dice-faces.aseprite");
 pub const FACE_SPRITES: &FaceSprites = &FaceSprites::load_face_sprites();
+pub const ENEMY_ATTACK_SPRITES: &EnemyAttackSprites = &EnemyAttackSprites::new();
 pub const SELECT_BOX: &Tag = DICE_FACES.tags().get("selection");
 
 const SHIPS: &agb::display::object::Graphics = agb::include_aseprite!("gfx/ships.aseprite");
@@ -70,6 +71,25 @@ impl SmallSprites {
 
     pub const fn red_bar(&self, i: usize) -> &'static Sprite {
         SMALL_SPRITES_GFX.tags().get("red bar").sprite(i)
+    }
+}
+
+pub struct EnemyAttackSprites {
+    sprites: [&'static Sprite; 2],
+}
+
+impl EnemyAttackSprites {
+    const fn new() -> Self {
+        const S_SHOOT: &Sprite = DICE_FACES.tags().get("enemy shoot").sprite(0);
+        const S_SHIELD: &Sprite = DICE_FACES.tags().get("enemy shield").sprite(0);
+
+        Self {
+            sprites: [S_SHOOT, S_SHIELD],
+        }
+    }
+
+    pub fn sprite_for_attack(&self, attack: EnemyAttackType) -> &'static Sprite {
+        self.sprites[attack as usize]
     }
 }
 

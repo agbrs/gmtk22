@@ -3,6 +3,7 @@ use crate::{
     Agb, Face, PlayerDice, Ship,
 };
 use agb::{hash_map::HashMap, input::Button};
+use alloc::vec;
 use alloc::vec::Vec;
 
 const MALFUNCTION_COOLDOWN_FRAMES: u32 = 5 * 60;
@@ -100,10 +101,24 @@ struct PlayerState {
 }
 
 #[derive(Debug)]
+enum EnemyAttack {
+    Shoot(u16),
+    Shield,
+}
+
+#[derive(Debug)]
+struct EnemyAttackState {
+    attack: EnemyAttack,
+    cooldown: u32,
+    max_cooldown: u32,
+}
+
+#[derive(Debug)]
 struct EnemyState {
     shield_count: u32,
     health: u32,
     max_health: u32,
+    attacks: Vec<EnemyAttackState>,
 }
 
 #[derive(Debug)]
@@ -190,6 +205,7 @@ pub(crate) fn battle_screen(agb: &mut Agb, player_dice: PlayerDice) {
             shield_count: 5,
             health: 38,
             max_health: 50,
+            attacks: vec![],
         },
         rolled_dice: RolledDice {
             rolls: player_dice

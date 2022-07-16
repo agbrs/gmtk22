@@ -41,6 +41,12 @@ pub enum Ship {
     Shield,
 }
 
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Hash)]
+pub enum EnemyAttackType {
+    Attack,
+    Shield,
+}
+
 #[derive(Debug, Clone)]
 pub struct Die {
     faces: [Face; 6],
