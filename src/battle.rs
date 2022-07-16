@@ -215,8 +215,8 @@ impl CurrentBattleState {
         }
 
         // shooting
-        let shoot = *face_counts.entry(Face::Shoot).or_default();
-        let shoot_power = (shoot * (shoot - 1)) / 2;
+        let shoot = *face_counts.entry(Face::Shoot).or_default() as i32;
+        let shoot_power = ((shoot * (shoot - 1)) / 2) as u32;
         let enemy_shield_equiv = self
             .enemy
             .shield_count
@@ -228,6 +228,14 @@ impl CurrentBattleState {
             } else {
                 self.enemy.health = self.enemy.health.saturating_sub(shoot_power);
             }
+        }
+
+        // disrupt
+
+        let disrupt = *face_counts.entry(Face::Disrupt).or_default() as i32;
+        let disrupt_power = ((disrupt * (disrupt - 1)) / 2) as u32;
+        for a in self.attacks.iter_mut().flatten() {
+            a.cooldown += disrupt_power * 60;
         }
 
         let mut malfunction_all = false;
