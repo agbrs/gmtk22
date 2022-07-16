@@ -13,9 +13,18 @@ use crate::{
 };
 
 enum CustomiseState {
-    DiceSelect(u32),
-    FaceSelect(u32),
-    UpgradeSelect(u32),
+    DiceSelect {
+        dice: usize,
+    },
+    FaceSelect {
+        dice: usize,
+        face: usize,
+    },
+    UpgradeSelect {
+        dice: usize,
+        face: usize,
+        upgrade: usize,
+    },
 }
 
 fn net_position_for_index(idx: usize) -> (u32, u32) {
@@ -81,6 +90,20 @@ fn move_net_position_ud(idx: usize, direction: Tri) -> usize {
     }
 }
 
+fn create_dice_display<'a>(gfx: &'a ObjectController, dice: &'_ PlayerDice) -> Vec<Object<'a>> {
+    let mut objects = Vec::new();
+    for (idx, dice) in dice.dice.iter().enumerate() {
+        let mut obj = gfx.object(gfx.sprite(FACE_SPRITES.sprite_for_face(dice.faces[1])));
+        obj.set_x((idx * 32 - 24 / 2 + 20) as u16);
+        obj.set_y(16 - 24 / 2);
+
+        obj.show();
+
+        objects.push(obj);
+    }
+    objects
+}
+
 fn create_net<'a>(gfx: &'a ObjectController, die: &'_ Die) -> Vec<Object<'a>> {
     let mut objects = Vec::new();
     for (idx, &face) in die.faces.iter().enumerate() {
@@ -97,10 +120,11 @@ fn create_net<'a>(gfx: &'a ObjectController, die: &'_ Die) -> Vec<Object<'a>> {
     objects
 }
 
-pub(crate) fn customise_screen(agb: &mut Agb, player_dice: PlayerDice) -> PlayerDice {
+pub(crate) fn customise_screen(agb: &mut Agb, mut player_dice: PlayerDice) -> PlayerDice {
     // create the dice
 
-    let net = create_net(&agb.obj, &player_dice.dice[0]);
+    let mut _net = create_net(&agb.obj, &player_dice.dice[0]);
+    let _dice = create_dice_display(&agb.obj, &player_dice);
 
     let mut input = agb::input::ButtonController::new();
 
@@ -108,9 +132,9 @@ pub(crate) fn customise_screen(agb: &mut Agb, player_dice: PlayerDice) -> Player
 
     select_box.show();
 
-    let mut current_net_index = 0;
-
     let mut counter = 0usize;
+
+    let mut state = CustomiseState::DiceSelect { dice: 0 };
 
     loop {
         counter = counter.wrapping_add(1);
@@ -125,16 +149,47 @@ pub(crate) fn customise_screen(agb: &mut Agb, player_dice: PlayerDice) -> Player
             input.is_just_pressed(Button::RIGHT),
         )
             .into();
-        current_net_index = move_net_position_lr(current_net_index, lr);
-        current_net_index = move_net_position_ud(current_net_index, ud);
 
-        {
-            let (x, y) = screen_position_for_index(current_net_index);
-            select_box.set_x((x - 32 / 2) as u16);
-            select_box.set_y((y - 32 / 2) as u16);
+        match &mut state {
+            CustomiseState::DiceSelect { dice } => {
+                let new_dice = (*dice as isize + lr as isize)
+                    .rem_euclid(player_dice.dice.len() as isize)
+                    as usize;
+                if new_dice != *dice {
+                    *dice = new_dice;
+                    _net = create_net(&agb.obj, &player_dice.dice[*dice]);
+                }
+
+                select_box.set_x((*dice * 32 - 32 / 2 + 20) as u16);
+                select_box.set_y(0);
+
+                if input.is_just_pressed(Button::A) {
+                    state = CustomiseState::FaceSelect {
+                        dice: *dice,
+                        face: 1,
+                    }
+                }
+            }
+            CustomiseState::FaceSelect { dice, face } => {
+                *face = move_net_position_lr(*face, lr);
+                *face = move_net_position_ud(*face, ud);
+
+                let (x, y) = screen_position_for_index(*face);
+                select_box.set_x((x - 32 / 2) as u16);
+                select_box.set_y((y - 32 / 2) as u16);
+
+                if input.is_just_pressed(Button::B) {
+                    state = CustomiseState::DiceSelect { dice: *dice };
+                }
+            }
+            CustomiseState::UpgradeSelect {
+                dice,
+                face,
+                upgrade,
+            } => {}
         }
 
-        if input.is_just_pressed(Button::A) {
+        if input.is_just_pressed(Button::START) {
             return player_dice;
         }
 
