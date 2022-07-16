@@ -35,7 +35,7 @@ impl RolledDie {
 
 #[derive(Debug)]
 enum DieState {
-    Rolling(u32),
+    Rolling(u32, Face),
     Rolled(RolledDie),
 }
 
@@ -50,10 +50,13 @@ impl RolledDice {
             .iter_mut()
             .zip(player_dice.dice.iter())
             .for_each(|(die_state, player_die)| match die_state {
-                DieState::Rolling(ref mut timeout) => {
+                DieState::Rolling(ref mut timeout, ref mut face) => {
                     if *timeout == 0 {
                         *die_state = DieState::Rolled(RolledDie::new(player_die.roll()));
                     } else {
+                        if *timeout % 4 == 0 {
+                            *face = player_die.roll();
+                        }
                         *timeout -= 1;
                     }
                 }
@@ -78,7 +81,7 @@ impl RolledDice {
             .iter()
             .zip(player_dice.dice.iter())
             .map(|(rolled_die, player_die)| match rolled_die {
-                DieState::Rolling(_) => player_die.roll(),
+                DieState::Rolling(_, face) => *face,
                 DieState::Rolled(RolledDie { face, .. }) => *face,
             })
     }
@@ -118,7 +121,8 @@ impl CurrentBattleState {
     fn roll_die(&mut self, die_index: usize) {
         if let DieState::Rolled(ref selected_rolled_die) = self.rolled_dice.rolls[die_index] {
             if selected_rolled_die.can_reroll() {
-                self.rolled_dice.rolls[die_index] = DieState::Rolling(ROLL_TIME_FRAMES);
+                self.rolled_dice.rolls[die_index] =
+                    DieState::Rolling(ROLL_TIME_FRAMES, self.player_dice.dice[die_index].roll());
             }
         }
     }
@@ -151,7 +155,7 @@ pub(crate) fn battle_screen(agb: &mut Agb, player_dice: PlayerDice) {
             rolls: player_dice
                 .dice
                 .iter()
-                .map(|_| DieState::Rolling(ROLL_TIME_FRAMES))
+                .map(|die| DieState::Rolling(ROLL_TIME_FRAMES, die.roll()))
                 .collect(),
         },
         player_dice: player_dice.clone(),
