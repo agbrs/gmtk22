@@ -41,11 +41,11 @@ pub struct Sfx<'a> {
 impl<'a> Sfx<'a> {
     pub fn new(mixer: &'a mut Mixer) -> Self {
         let mut battle_music = SoundChannel::new_high_priority(BATTLE_BGM);
-        battle_music.should_loop().playback(num!(2.)).volume(0);
+        battle_music.should_loop().playback(num!(1.)).volume(0);
         let battle_channel = mixer.play_sound(battle_music).unwrap();
 
         let mut menu_music = SoundChannel::new_high_priority(MENU_BGM);
-        menu_music.should_loop().playback(num!(2.)).volume(1);
+        menu_music.should_loop().playback(num!(1.)).volume(1);
         let menu_channel = mixer.play_sound(menu_music).unwrap();
 
         Self {
