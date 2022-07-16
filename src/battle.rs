@@ -47,6 +47,7 @@ struct CurrentBattleState {
     player: PlayerState,
     enemy: EnemyState,
     rolled_dice: RolledDice,
+    player_dice: PlayerDice,
 }
 
 impl CurrentBattleState {
@@ -61,6 +62,17 @@ impl CurrentBattleState {
         let shield = face_counts.entry(Face::Shield).or_default();
         if self.player.shield_count <= *shield {
             self.player.shield_count += 1;
+        }
+    }
+
+    fn roll_die(&mut self, die_index: usize) {
+        let selected_rolled_die = &mut self.rolled_dice.rolls[die_index];
+        if selected_rolled_die.can_reroll() {
+            selected_rolled_die.face = self.player_dice.dice[die_index].roll();
+
+            if selected_rolled_die.face == Face::Malfunction {
+                selected_rolled_die.cooldown = MALFUNCTION_COOLDOWN_FRAMES;
+            }
         }
     }
 }
@@ -80,6 +92,8 @@ pub(crate) fn battle_screen(agb: &mut Agb, player_dice: PlayerDice) {
     let mut select_box_obj = agb.obj.object(agb.obj.sprite(SELECT_BOX.sprite(0)));
     select_box_obj.show();
 
+    let num_dice = player_dice.dice.len();
+
     let mut current_battle_state = CurrentBattleState {
         player: PlayerState {
             shield_count: 0,
@@ -96,6 +110,7 @@ pub(crate) fn battle_screen(agb: &mut Agb, player_dice: PlayerDice) {
                 })
                 .collect(),
         },
+        player_dice,
     };
 
     let mut dice_display: Vec<_> = current_battle_state
@@ -124,14 +139,14 @@ pub(crate) fn battle_screen(agb: &mut Agb, player_dice: PlayerDice) {
 
         if input.is_just_pressed(Button::LEFT) {
             if selected_die == 0 {
-                selected_die = player_dice.dice.len() - 1;
+                selected_die = num_dice - 1;
             } else {
                 selected_die -= 1;
             }
         }
 
         if input.is_just_pressed(Button::RIGHT) {
-            if selected_die == player_dice.dice.len() - 1 {
+            if selected_die == num_dice - 1 {
                 selected_die = 0;
             } else {
                 selected_die += 1;
@@ -139,14 +154,7 @@ pub(crate) fn battle_screen(agb: &mut Agb, player_dice: PlayerDice) {
         }
 
         if input.is_just_pressed(Button::A) {
-            let selected_rolled_die = &mut current_battle_state.rolled_dice.rolls[selected_die];
-            if selected_rolled_die.can_reroll() {
-                selected_rolled_die.face = player_dice.dice[selected_die].roll();
-
-                if selected_rolled_die.face == Face::Malfunction {
-                    selected_rolled_die.cooldown = MALFUNCTION_COOLDOWN_FRAMES;
-                }
-            }
+            current_battle_state.roll_die(selected_die);
         }
 
         if input.is_just_pressed(Button::START) {
