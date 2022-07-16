@@ -219,7 +219,7 @@ impl EnemyAttack {
     fn apply_effect(&self) -> Action {
         match self {
             EnemyAttack::Shoot(damage) => Action::EnemyShoot { damage: *damage },
-            EnemyAttack::Shield(shield) => Action::EnemyHeal { amount: *shield },
+            EnemyAttack::Shield(shield) => Action::EnemyShield { amount: *shield },
             EnemyAttack::Heal(amount) => Action::EnemyHeal { amount: *amount },
         }
     }
