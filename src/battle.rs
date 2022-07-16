@@ -425,10 +425,12 @@ pub(crate) fn battle_screen(agb: &mut Agb, player_dice: PlayerDice, current_leve
 
         if input.is_just_pressed(Button::A) {
             current_battle_state.roll_die(selected_die, ROLL_TIME_FRAMES_ONE);
+            agb.sfx.roll();
         }
 
         if input.is_just_pressed(Button::START) {
             current_battle_state.accept_rolls();
+            agb.sfx.roll_multi();
         }
 
         // update the dice display to display the current values
