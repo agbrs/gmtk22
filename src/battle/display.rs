@@ -191,7 +191,9 @@ impl<'a> BattleScreenDisplay<'a> {
     ) -> Vec<Action> {
         for (i, player_shield) in self.objs.player_shield.iter_mut().enumerate() {
             if i < current_battle_state.player.shield_count as usize {
-                player_shield.show();
+                player_shield
+                    .show()
+                    .set_sprite(obj.sprite(SHIELD.sprite(0)));
             } else {
                 player_shield.hide();
             }
@@ -199,7 +201,9 @@ impl<'a> BattleScreenDisplay<'a> {
 
         for (i, player_shield) in self.objs.enemy_shield.iter_mut().enumerate() {
             if i < current_battle_state.enemy.shield_count as usize {
-                player_shield.show();
+                player_shield
+                    .show()
+                    .set_sprite(obj.sprite(SHIELD.sprite(0)));
             } else {
                 player_shield.hide();
             }
