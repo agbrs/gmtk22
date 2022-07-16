@@ -364,7 +364,7 @@ impl<'a> AnimationState<'a> {
                 x_position: 64,
                 shield_break_frame: 0,
             },
-            DisplayAnimation::PlayerNewShield => Self::PlayerNewShield { shield_frame: 3 },
+            DisplayAnimation::PlayerNewShield => Self::PlayerNewShield { shield_frame: 6 },
             DisplayAnimation::EnemyShootPlayer => Self::EnemyShootPlayer {
                 bullet: obj.object(obj.sprite(BULLET_SPRITE)),
                 x_position: 176,
