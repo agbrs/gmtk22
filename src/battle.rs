@@ -215,7 +215,12 @@ impl CurrentBattleState {
         let shoot_power = shoot * shoot;
 
         if shoot_power > self.enemy.shield_count {
-            if self.enemy.shield_count > 0 {
+            if self
+                .enemy
+                .shield_count
+                .saturating_sub(*face_counts.entry(Face::Bypass).or_default())
+                > 0
+            {
                 self.enemy.shield_count -= 1;
             } else {
                 self.enemy.health = self.enemy.health.saturating_sub(shoot_power);
