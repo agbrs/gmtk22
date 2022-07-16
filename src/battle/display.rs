@@ -20,6 +20,7 @@ pub enum DisplayAnimation {
     EnemyBreakShield,
     PlayerNewShield,
     EnemyNewShield,
+    EnemyHeal,
 }
 
 struct BattleScreenDisplayObjects<'a> {
@@ -275,7 +276,11 @@ impl<'a> BattleScreenDisplay<'a> {
                 .map(|anim| AnimationState::for_animation(anim, obj));
         }
 
-        self.current_animation.is_some()
+        self.current_animation.is_none()
+    }
+
+    pub fn add_animation(&mut self, anim: DisplayAnimation) {
+        self.animations_to_play.push_back(anim);
     }
 }
 
@@ -355,6 +360,14 @@ impl<'a> AnimationState<'a> {
         objs: &mut BattleScreenDisplayObjects<'a>,
         obj: &'a ObjectController,
     ) -> bool {
-        return true;
+        match self {
+            Self::PlayerShootEnemy { bullet, x_position } => {
+                bullet.set_x(*x_position as u16).set_y(30).show();
+                *x_position += 2;
+
+                *x_position > 180
+            }
+            _ => true,
+        }
     }
 }

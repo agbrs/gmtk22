@@ -1,12 +1,11 @@
 use crate::{
-    graphics::{BULLET_SPRITE, SELECT_BOX},
-    level_generation::generate_attack,
-    Agb, EnemyAttackType, Face, PlayerDice,
+    graphics::SELECT_BOX, level_generation::generate_attack, Agb, EnemyAttackType, Face, PlayerDice,
 };
 use agb::{hash_map::HashMap, input::Button};
+use alloc::vec;
 use alloc::vec::Vec;
 
-use self::display::BattleScreenDisplay;
+use self::display::{BattleScreenDisplay, DisplayAnimation};
 
 mod display;
 
@@ -117,24 +116,36 @@ pub enum EnemyAttack {
 }
 
 impl EnemyAttack {
-    fn apply_effect(&self, player_state: &mut PlayerState, enemy_state: &mut EnemyState) {
+    fn apply_effect(
+        &self,
+        player_state: &mut PlayerState,
+        enemy_state: &mut EnemyState,
+    ) -> Option<DisplayAnimation> {
         match self {
             EnemyAttack::Shoot(damage) => {
                 if *damage > player_state.shield_count {
                     if player_state.shield_count > 0 {
                         player_state.shield_count -= 1;
+                        Some(DisplayAnimation::EnemyBreakShield)
                     } else {
                         player_state.health = player_state.health.saturating_sub(*damage);
+                        Some(DisplayAnimation::EnemyShootPlayer)
                     }
+                } else {
+                    None
                 }
             }
             EnemyAttack::Shield => {
                 if enemy_state.shield_count < 5 {
                     enemy_state.shield_count += 1;
+                    Some(DisplayAnimation::EnemyNewShield)
+                } else {
+                    None
                 }
             }
             EnemyAttack::Heal(amount) => {
                 enemy_state.health = enemy_state.max_health.min(enemy_state.health + amount);
+                Some(DisplayAnimation::EnemyHeal)
             }
         }
     }
@@ -165,15 +176,18 @@ impl EnemyAttackState {
     }
 
     #[must_use]
-    fn update(&mut self, player_state: &mut PlayerState, enemy_state: &mut EnemyState) -> bool {
+    fn update(
+        &mut self,
+        player_state: &mut PlayerState,
+        enemy_state: &mut EnemyState,
+    ) -> Option<DisplayAnimation> {
         if self.cooldown == 0 {
-            self.attack.apply_effect(player_state, enemy_state);
-            return true;
+            return self.attack.apply_effect(player_state, enemy_state);
         }
 
         self.cooldown -= 1;
 
-        false
+        None
     }
 }
 
@@ -291,13 +305,16 @@ impl CurrentBattleState {
         }
     }
 
-    fn update(&mut self) {
+    fn update(&mut self) -> Vec<DisplayAnimation> {
         self.rolled_dice.update(&self.player_dice);
+
+        let mut animations = vec![];
 
         for attack in self.attacks.iter_mut() {
             if let Some(attack_state) = attack {
-                if attack_state.update(&mut self.player, &mut self.enemy) {
+                if let Some(animation) = attack_state.update(&mut self.player, &mut self.enemy) {
                     attack.take();
+                    animations.push(animation);
                 }
             } else if let Some(generated_attack) = generate_attack(self.current_level) {
                 attack.replace(EnemyAttackState {
@@ -305,8 +322,10 @@ impl CurrentBattleState {
                     cooldown: generated_attack.cooldown,
                     max_cooldown: generated_attack.cooldown,
                 });
-            };
+            }
         }
+
+        animations
     }
 }
 
@@ -351,7 +370,9 @@ pub(crate) fn battle_screen(agb: &mut Agb, player_dice: PlayerDice, current_leve
         counter = counter.wrapping_add(1);
 
         if battle_screen_display.update(obj, &current_battle_state) {
-            current_battle_state.update();
+            for animation in current_battle_state.update() {
+                battle_screen_display.add_animation(animation);
+            }
         }
 
         input.update();
