@@ -149,56 +149,6 @@ fn create_upgrade_objects<'a>(gfx: &'a ObjectController, upgrades: &[Face]) -> V
     objects
 }
 
-fn generate_upgrades(level: u32) -> Vec<Face> {
-    let mut upgrade_values = HashMap::new();
-
-    upgrade_values.insert(Face::Shoot, 5);
-    upgrade_values.insert(Face::Shield, 5);
-    upgrade_values.insert(Face::DoubleShot, 10);
-    upgrade_values.insert(Face::TripleShot, 20);
-    upgrade_values.insert(Face::Malfunction, -2);
-    upgrade_values.insert(Face::Bypass, 7);
-    upgrade_values.insert(Face::Disrupt, 10);
-
-    let potential_upgrades: Vec<Face> = upgrade_values.keys().cloned().collect();
-
-    let mut upgrades = Vec::new();
-
-    let upgrade_value = |upgrades: &[Face], potential_upgrade: Face| -> i32 {
-        upgrades
-            .iter()
-            .map(|x| upgrade_values.get(x).unwrap())
-            .sum::<i32>()
-            + upgrade_values.get(&potential_upgrade).unwrap()
-    };
-
-    let max_upgrade_value = 15 + (rng::gen().rem_euclid(level as i32 * 5));
-    let mut attempts = 0;
-
-    while upgrades.len() != 3 {
-        attempts += 1;
-        let next = potential_upgrades[rng::gen() as usize % potential_upgrades.len()];
-        let number_of_malfunctions = upgrades
-            .iter()
-            .chain(core::iter::once(&next))
-            .filter(|&x| *x == Face::Malfunction)
-            .count();
-        let maximum_number_of_malfunctions = if level < 5 { 0 } else { 1 };
-        if upgrade_value(&upgrades, next) <= max_upgrade_value
-            && number_of_malfunctions <= maximum_number_of_malfunctions
-        {
-            upgrades.push(next);
-            attempts = 0;
-        }
-
-        if attempts > 100 {
-            upgrades.clear();
-        }
-    }
-
-    upgrades
-}
-
 pub(crate) fn customise_screen(
     agb: &mut Agb,
     mut player_dice: PlayerDice,
@@ -220,7 +170,7 @@ pub(crate) fn customise_screen(
     let mut _net = create_net(&agb.obj, &player_dice.dice[0]);
     let mut _dice = create_dice_display(&agb.obj, &player_dice);
 
-    let mut upgrades = generate_upgrades(level);
+    let mut upgrades = crate::level_generation::generate_upgrades(level);
     let mut _upgrade_objects = create_upgrade_objects(&agb.obj, &upgrades);
 
     let mut input = agb::input::ButtonController::new();
