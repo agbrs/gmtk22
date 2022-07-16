@@ -140,6 +140,14 @@ fn main(mut gba: agb::Gba) -> ! {
         sfx,
     };
 
+    let mut input = agb::input::ButtonController::new();
+    loop {
+        let _ = agb::rng::gen();
+        input.update();
+        if input.is_just_pressed(agb::input::Button::all()) {
+            break;
+        }
+    }
     loop {
         dice = customise::customise_screen(&mut agb, dice.clone(), &mut card_descriptions);
 
