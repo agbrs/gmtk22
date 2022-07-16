@@ -349,6 +349,7 @@ impl CurrentBattleState {
 
 pub(crate) fn battle_screen(agb: &mut Agb, player_dice: PlayerDice, current_level: u32) {
     agb.sfx.battle();
+    agb.sfx.frame();
 
     let obj = &agb.obj;
 
@@ -381,6 +382,7 @@ pub(crate) fn battle_screen(agb: &mut Agb, player_dice: PlayerDice, current_leve
     };
 
     let mut battle_screen_display = BattleScreenDisplay::new(obj, &current_battle_state);
+    agb.sfx.frame();
 
     let mut selected_die = 0usize;
     let mut input = agb::input::ButtonController::new();
