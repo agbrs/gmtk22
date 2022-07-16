@@ -301,7 +301,7 @@ pub(crate) fn customise_screen(
             }
         }
 
-        if input.is_just_pressed(Button::START) {
+        if upgrades.is_empty() {
             break;
         }
 
