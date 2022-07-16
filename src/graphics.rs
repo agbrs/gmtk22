@@ -21,7 +21,7 @@ pub const SHIP_SPRITES: &ShipSprites = &ShipSprites::load_ship_sprites();
 pub const SMALL_SPRITES: &SmallSprites = &SmallSprites {};
 
 pub struct FaceSprites {
-    sprites: [&'static Sprite; 3],
+    sprites: [&'static Sprite; 9],
 }
 
 impl FaceSprites {
@@ -29,8 +29,25 @@ impl FaceSprites {
         const S_SHOOT: &Sprite = SPRITES.tags().get("shoot").sprite(0);
         const S_SHIELD: &Sprite = SPRITES.tags().get("shield").sprite(0);
         const S_MALFUNCTION: &Sprite = SPRITES.tags().get("malfunction").sprite(0);
+        const S_HEAL: &Sprite = SPRITES.tags().get("player_heal").sprite(0);
+        const S_BYPASS: &Sprite = SPRITES.tags().get("shield bypass").sprite(0);
+        const S_DOUBLESHOT: &Sprite = SPRITES.tags().get("double shoot").sprite(0);
+        const S_TRIPLESHOT: &Sprite = SPRITES.tags().get("triple shoot").sprite(0);
+        const S_BLANK: &Sprite = SPRITES.tags().get("blank").sprite(0);
+        const S_DISRUPT: &Sprite = SPRITES.tags().get("disruption").sprite(0);
+
         Self {
-            sprites: [S_SHOOT, S_SHIELD, S_MALFUNCTION],
+            sprites: [
+                S_SHOOT,
+                S_SHIELD,
+                S_MALFUNCTION,
+                S_HEAL,
+                S_BYPASS,
+                S_DOUBLESHOT,
+                S_TRIPLESHOT,
+                S_BLANK,
+                S_DISRUPT,
+            ],
         }
     }
 
