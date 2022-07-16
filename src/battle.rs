@@ -5,7 +5,7 @@ use agb::{hash_map::HashMap, input::Button};
 use alloc::vec;
 use alloc::vec::Vec;
 
-use self::display::{Actions, BattleScreenDisplay};
+use self::display::BattleScreenDisplay;
 
 mod display;
 
@@ -58,7 +58,7 @@ enum DieState {
     Rolled(RolledDie),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Action {
     PlayerActivateShield { amount: u32 },
     PlayerShoot { damage: u32, piercing: u32 },
@@ -311,6 +311,17 @@ impl CurrentBattleState {
 
     fn update_dice(&mut self) {
         self.rolled_dice.update(&self.player_dice);
+    }
+
+    fn apply_action(&mut self, action: Action) {
+        match action {
+            Action::PlayerActivateShield { amount } => todo!(),
+            Action::PlayerShoot { damage, piercing } => todo!(),
+            Action::PlayerDisrupt { amount } => todo!(),
+            Action::EnemyShoot { damage } => todo!(),
+            Action::EnemyShield { amount } => todo!(),
+            Action::EnemyHeal { amount } => todo!(),
+        }
     }
 }
 

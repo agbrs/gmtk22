@@ -11,18 +11,7 @@ use crate::{
     EnemyAttackType, Ship,
 };
 
-use super::{CurrentBattleState, EnemyAttackState, MALFUNCTION_COOLDOWN_FRAMES};
-
-#[derive(Clone, Copy)]
-pub enum Actions {
-    PlayerShootEnemy,
-    EnemyShootPlayer,
-    PlayerBreakShield,
-    EnemyBreakShield,
-    PlayerNewShield,
-    EnemyNewShield,
-    EnemyHeal,
-}
+use super::{Action, CurrentBattleState, EnemyAttackState, MALFUNCTION_COOLDOWN_FRAMES};
 
 struct BattleScreenDisplayObjects<'a> {
     dice: Vec<Object<'a>>,
@@ -40,7 +29,7 @@ struct BattleScreenDisplayObjects<'a> {
 
 pub struct BattleScreenDisplay<'a> {
     objs: BattleScreenDisplayObjects<'a>,
-    animations: Vec<AnimationState<'a>>,
+    animations: Vec<AnimationStateHolder<'a>>,
 
     _misc_sprites: Vec<Object<'a>>,
 }
@@ -221,9 +210,9 @@ impl<'a> BattleScreenDisplay<'a> {
 
         let mut animations_to_remove = vec![];
         for (i, animation) in self.animations.iter_mut().enumerate() {
-            if animation.update(&mut self.objs, obj, current_battle_state) {
-                animations_to_remove.push(i);
-            }
+            // if animation.update(&mut self.objs, obj, current_battle_state) {
+            //     animations_to_remove.push(i);
+            // }
         }
 
         for &animation_to_remove in animations_to_remove.iter().rev() {
@@ -277,9 +266,9 @@ impl<'a> BattleScreenDisplay<'a> {
         true
     }
 
-    pub fn add_animation(&mut self, anim: Actions, obj: &'a ObjectController) {
+    pub fn add_animation(&mut self, action: Action, obj: &'a ObjectController) {
         self.animations
-            .push(AnimationState::for_animation(anim, obj))
+            .push(AnimationStateHolder::for_action(action, obj))
     }
 }
 
@@ -317,60 +306,34 @@ impl<'a> EnemyAttackDisplay<'a> {
 }
 
 enum AnimationState<'a> {
-    PlayerShootEnemy {
-        bullet: Object<'a>,
-        x_position: i32,
-    },
-    EnemyShootPlayer {
-        bullet: Object<'a>,
-        x_position: i32,
-    },
-    PlayerBreakShield {
-        bullet: Object<'a>,
-        x_position: i32,
-        shield_break_frame: i32,
-    },
-    EnemyBreakShield {
-        bullet: Object<'a>,
-        x_position: i32,
-        shield_break_frame: i32,
-    },
-    PlayerNewShield {
-        shield_frame: i32,
-    },
-    EnemyNewShield {
-        shield_frame: i32,
-    },
-    EnemyHeal {
-        heal_frame: i32,
-    },
+    PlayerShoot { bullet: Object<'a>, x: i32 },
 }
 
-impl<'a> AnimationState<'a> {
-    fn for_animation(a: Actions, obj: &'a ObjectController) -> Self {
-        match a {
-            Actions::PlayerShootEnemy => Self::PlayerShootEnemy {
-                x_position: 64,
+struct AnimationStateHolder<'a> {
+    action: Action,
+    state: AnimationState<'a>,
+}
+
+enum AnimationUpdateState {
+    RemoveWithAction(Action),
+    Continue,
+}
+
+impl<'a> AnimationStateHolder<'a> {
+    fn for_action(a: Action, obj: &'a ObjectController) -> Self {
+        let state = match a {
+            Action::PlayerActivateShield { .. } => todo!(),
+            Action::PlayerShoot { .. } => AnimationState::PlayerShoot {
                 bullet: obj.object(obj.sprite(BULLET_SPRITE)),
+                x: 64,
             },
-            Actions::PlayerBreakShield => Self::PlayerBreakShield {
-                bullet: obj.object(obj.sprite(BULLET_SPRITE)),
-                x_position: 64,
-                shield_break_frame: 0,
-            },
-            Actions::PlayerNewShield => Self::PlayerNewShield { shield_frame: 6 },
-            Actions::EnemyShootPlayer => Self::EnemyShootPlayer {
-                bullet: obj.object(obj.sprite(BULLET_SPRITE)),
-                x_position: 176,
-            },
-            Actions::EnemyBreakShield => Self::EnemyBreakShield {
-                bullet: obj.object(obj.sprite(BULLET_SPRITE)),
-                x_position: 176,
-                shield_break_frame: 0,
-            },
-            Actions::EnemyNewShield => Self::EnemyNewShield { shield_frame: 6 },
-            Actions::EnemyHeal => AnimationState::EnemyHeal { heal_frame: 0 },
-        }
+            Action::PlayerDisrupt { .. } => todo!(),
+            Action::EnemyShoot { .. } => todo!(),
+            Action::EnemyShield { .. } => todo!(),
+            Action::EnemyHeal { .. } => todo!(),
+        };
+
+        Self { action: a, state }
     }
 
     fn update(
@@ -378,98 +341,7 @@ impl<'a> AnimationState<'a> {
         objs: &mut BattleScreenDisplayObjects<'a>,
         obj: &'a ObjectController,
         current_battle_state: &CurrentBattleState,
-    ) -> bool {
-        match self {
-            Self::PlayerShootEnemy { bullet, x_position } => {
-                bullet.set_x(*x_position as u16).set_y(36).show();
-                *x_position += 2;
-
-                *x_position > 190
-            }
-            Self::PlayerBreakShield {
-                bullet,
-                x_position,
-                shield_break_frame,
-            } => {
-                if *x_position > 190 {
-                    if *shield_break_frame >= 12 {
-                        for shield_obj in objs.enemy_shield.iter_mut() {
-                            shield_obj.set_sprite(obj.sprite(SHIELD.sprite(0)));
-                        }
-                        true
-                    } else {
-                        for shield_obj in objs.enemy_shield.iter_mut() {
-                            shield_obj.set_sprite(
-                                obj.sprite(SHIELD.sprite((*shield_break_frame / 2) as usize)),
-                            );
-                        }
-                        false
-                    }
-                } else {
-                    bullet.set_x(*x_position as u16).set_y(36).show();
-                    *x_position += 2;
-
-                    false
-                }
-            }
-            Self::PlayerNewShield { shield_frame } => {
-                objs.player_shield[(current_battle_state.player.shield_count - 1) as usize]
-                    .show()
-                    .set_sprite(obj.sprite(SHIELD.sprite(*shield_frame as usize / 2)));
-
-                *shield_frame -= 1;
-                *shield_frame == 0
-            }
-            Self::EnemyShootPlayer { bullet, x_position } => {
-                bullet
-                    .set_x(*x_position as u16)
-                    .set_y(36)
-                    .show()
-                    .set_hflip(true);
-                *x_position -= 2;
-
-                *x_position < 48
-            }
-            Self::EnemyBreakShield {
-                bullet,
-                x_position,
-                shield_break_frame,
-            } => {
-                if *x_position < 48 {
-                    if *shield_break_frame >= 12 {
-                        for shield_obj in objs.player_shield.iter_mut() {
-                            shield_obj.set_sprite(obj.sprite(SHIELD.sprite(0)));
-                        }
-                        true
-                    } else {
-                        for shield_obj in objs.player_shield.iter_mut() {
-                            shield_obj.set_sprite(
-                                obj.sprite(SHIELD.sprite((*shield_break_frame / 2) as usize)),
-                            );
-                        }
-                        *shield_break_frame += 1;
-                        false
-                    }
-                } else {
-                    bullet
-                        .set_x(*x_position as u16)
-                        .set_y(36)
-                        .show()
-                        .set_hflip(true);
-                    *x_position -= 2;
-
-                    false
-                }
-            }
-            Self::EnemyNewShield { shield_frame } => {
-                objs.enemy_shield[(current_battle_state.enemy.shield_count - 1) as usize]
-                    .show()
-                    .set_sprite(obj.sprite(SHIELD.sprite(*shield_frame as usize / 2)));
-
-                *shield_frame -= 1;
-                *shield_frame == 0
-            }
-            _ => true,
-        }
+    ) -> AnimationUpdateState {
+        AnimationUpdateState::RemoveWithAction(self.action.clone())
     }
 }
