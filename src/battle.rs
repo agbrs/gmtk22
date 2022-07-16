@@ -513,6 +513,7 @@ pub(crate) fn battle_screen(agb: &mut Agb, player_dice: PlayerDice, current_leve
             .set_sprite(agb.obj.sprite(SELECT_BOX.animation_sprite(counter / 10)));
 
         agb.star_background.update();
+        agb.sfx.frame();
         agb.vblank.wait_for_vblank();
         agb.obj.commit();
         agb.star_background.commit(&mut agb.vram);

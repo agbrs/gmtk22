@@ -305,6 +305,7 @@ pub(crate) fn customise_screen(
 
         agb.star_background.update();
         let _ = agb::rng::gen();
+        agb.sfx.frame();
         agb.vblank.wait_for_vblank();
         agb.obj.commit();
         descriptions_map.commit(&mut agb.vram);

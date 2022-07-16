@@ -25,8 +25,10 @@ mod battle;
 mod customise;
 mod graphics;
 mod level_generation;
+mod sfx;
 
 use background::StarBackground;
+use sfx::Sfx;
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Hash)]
 pub enum Face {
@@ -72,6 +74,7 @@ struct Agb<'a> {
     vblank: VBlank,
     star_background: StarBackground<'a>,
     vram: VRamManager,
+    sfx: Sfx<'a>,
 }
 
 fn main(mut gba: agb::Gba) -> ! {
@@ -100,13 +103,6 @@ fn main(mut gba: agb::Gba) -> ! {
 
     star_background.commit(&mut vram);
 
-    let mut agb = Agb {
-        obj: gfx,
-        vblank,
-        star_background,
-        vram,
-    };
-
     let basic_die = Die {
         faces: [
             Face::Attack,
@@ -123,6 +119,20 @@ fn main(mut gba: agb::Gba) -> ! {
     };
 
     let mut current_level = 1;
+
+    let mut mixer = gba.mixer.mixer();
+    mixer.enable();
+    let _interrupt_handler = mixer.setup_interrupt_handler();
+
+    let sfx = Sfx::new(&mut mixer);
+
+    let mut agb = Agb {
+        obj: gfx,
+        vblank,
+        star_background,
+        vram,
+        sfx,
+    };
 
     loop {
         dice = customise::customise_screen(&mut agb, dice.clone(), &mut card_descriptions);
