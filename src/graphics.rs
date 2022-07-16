@@ -11,6 +11,7 @@ const DICE_FACES: &agb::display::object::Graphics =
 pub const FACE_SPRITES: &FaceSprites = &FaceSprites::load_face_sprites();
 pub const ENEMY_ATTACK_SPRITES: &EnemyAttackSprites = &EnemyAttackSprites::new();
 pub const SELECT_BOX: &Tag = DICE_FACES.tags().get("selection");
+pub const SELECTED_BOX: &Tag = DICE_FACES.tags().get("selected");
 
 const SHIPS: &agb::display::object::Graphics = agb::include_aseprite!("gfx/ships.aseprite");
 pub const SHIP_SPRITES: &ShipSprites = &ShipSprites::load_ship_sprites();

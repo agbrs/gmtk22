@@ -12,7 +12,7 @@ use alloc::vec;
 use alloc::vec::Vec;
 
 use crate::{
-    graphics::{FACE_SPRITES, SELECT_BOX},
+    graphics::{FACE_SPRITES, SELECTED_BOX, SELECT_BOX},
     Agb, Die, Face, PlayerDice,
 };
 
@@ -182,6 +182,11 @@ pub(crate) fn customise_screen(
 
     select_box.show();
 
+    let mut selected_dice = agb.obj.object(agb.obj.sprite(SELECTED_BOX.sprite(0)));
+    selected_dice.hide();
+    let mut selected_face = agb.obj.object(agb.obj.sprite(SELECTED_BOX.sprite(0)));
+    selected_face.hide();
+
     let mut counter = 0usize;
 
     let mut state = CustomiseState::Dice { dice: 0 };
@@ -202,6 +207,7 @@ pub(crate) fn customise_screen(
 
         match &mut state {
             CustomiseState::Dice { dice } => {
+                selected_dice.hide();
                 let new_dice = (*dice as isize + lr as isize)
                     .rem_euclid(player_dice.dice.len() as isize)
                     as usize;
@@ -214,6 +220,9 @@ pub(crate) fn customise_screen(
                 select_box.set_y(0);
 
                 if input.is_just_pressed(Button::A) {
+                    selected_dice.set_x((*dice as i32 * 32 - 32 / 2 + 20) as u16);
+                    selected_dice.set_y(0);
+                    selected_dice.show();
                     state = CustomiseState::Face {
                         dice: *dice,
                         face: 1,
@@ -227,10 +236,15 @@ pub(crate) fn customise_screen(
                 let (x, y) = screen_position_for_index(*face);
                 select_box.set_x((x - 32 / 2) as u16);
                 select_box.set_y((y - 32 / 2) as u16);
+                selected_face.hide();
 
                 if input.is_just_pressed(Button::B) {
                     state = CustomiseState::Dice { dice: *dice };
                 } else if input.is_just_pressed(Button::A) && !upgrades.is_empty() {
+                    selected_face.set_x((x - 32 / 2) as u16);
+                    selected_face.set_y((y - 32 / 2) as u16);
+                    selected_face.show();
+
                     state = CustomiseState::Upgrade {
                         dice: *dice,
                         face: *face,
