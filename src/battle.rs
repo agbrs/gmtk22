@@ -130,10 +130,10 @@ impl RolledDice {
         let shoot = *face_counts.entry(Face::Shoot).or_default();
         let shoot_power = (shoot * (shoot + 1)) / 2;
 
-        let disrupter_shot = *face_counts.entry(Face::MalfunctionShot).or_default()
+        let malfunction_shoot = *face_counts.entry(Face::MalfunctionShot).or_default()
             * *face_counts.entry(Face::Malfunction).or_default();
 
-        let shoot_power = shoot_power + disrupter_shot;
+        let shoot_power = shoot_power + malfunction_shoot;
 
         if shoot_power > 0 {
             actions.push(Action::PlayerShoot {
