@@ -10,7 +10,8 @@ use agb::{hash_map::HashMap, input::Button};
 use alloc::vec::Vec;
 
 const MALFUNCTION_COOLDOWN_FRAMES: u32 = 5 * 60;
-const ROLL_TIME_FRAMES: u32 = 2 * 60;
+const ROLL_TIME_FRAMES_ALL: u32 = 2 * 60;
+const ROLL_TIME_FRAMES_ONE: u32 = 60 / 8;
 
 /// A face of the rolled die and it's cooldown (should it be a malfunction)
 #[derive(Debug)]
@@ -69,7 +70,7 @@ impl RolledDice {
                     if *timeout == 0 {
                         *die_state = DieState::Rolled(RolledDie::new(player_die.roll()));
                     } else {
-                        if *timeout % 4 == 0 {
+                        if *timeout % 2 == 0 {
                             *face = player_die.roll();
                         }
                         *timeout -= 1;
@@ -215,15 +216,15 @@ impl CurrentBattleState {
 
         // reroll everything after accepting
         for i in 0..self.player_dice.dice.len() {
-            self.roll_die(i);
+            self.roll_die(i, ROLL_TIME_FRAMES_ALL);
         }
     }
 
-    fn roll_die(&mut self, die_index: usize) {
+    fn roll_die(&mut self, die_index: usize, time: u32) {
         if let DieState::Rolled(ref selected_rolled_die) = self.rolled_dice.rolls[die_index] {
             if selected_rolled_die.can_reroll() {
                 self.rolled_dice.rolls[die_index] =
-                    DieState::Rolling(ROLL_TIME_FRAMES, self.player_dice.dice[die_index].roll());
+                    DieState::Rolling(time, self.player_dice.dice[die_index].roll());
             }
         }
     }
@@ -287,7 +288,7 @@ pub(crate) fn battle_screen(agb: &mut Agb, player_dice: PlayerDice, current_leve
             rolls: player_dice
                 .dice
                 .iter()
-                .map(|die| DieState::Rolling(ROLL_TIME_FRAMES, die.roll()))
+                .map(|die| DieState::Rolling(ROLL_TIME_FRAMES_ALL, die.roll()))
                 .collect(),
         },
         player_dice: player_dice.clone(),
@@ -423,7 +424,7 @@ pub(crate) fn battle_screen(agb: &mut Agb, player_dice: PlayerDice, current_leve
         }
 
         if input.is_just_pressed(Button::A) {
-            current_battle_state.roll_die(selected_die);
+            current_battle_state.roll_die(selected_die, ROLL_TIME_FRAMES_ONE);
         }
 
         if input.is_just_pressed(Button::START) {
