@@ -394,7 +394,7 @@ pub(crate) fn battle_screen(agb: &mut Agb, player_dice: PlayerDice, current_leve
 
         if battle_screen_display.update(obj, &current_battle_state) {
             for animation in current_battle_state.update() {
-                battle_screen_display.add_animation(animation);
+                battle_screen_display.add_animation(animation, obj);
             }
         }
 
@@ -425,7 +425,7 @@ pub(crate) fn battle_screen(agb: &mut Agb, player_dice: PlayerDice, current_leve
 
         if input.is_just_pressed(Button::START) {
             for animation in current_battle_state.accept_rolls() {
-                battle_screen_display.add_animation(animation);
+                battle_screen_display.add_animation(animation, obj);
             }
             agb.sfx.roll_multi();
         }

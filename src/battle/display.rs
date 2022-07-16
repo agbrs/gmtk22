@@ -40,9 +40,7 @@ struct BattleScreenDisplayObjects<'a> {
 
 pub struct BattleScreenDisplay<'a> {
     objs: BattleScreenDisplayObjects<'a>,
-
-    animations_to_play: VecDeque<DisplayAnimation>,
-    current_animation: Option<AnimationState<'a>>,
+    animations: Vec<AnimationState<'a>>,
 
     _misc_sprites: Vec<Object<'a>>,
 }
@@ -191,8 +189,7 @@ impl<'a> BattleScreenDisplay<'a> {
         Self {
             objs,
 
-            animations_to_play: VecDeque::new(),
-            current_animation: None,
+            animations: vec![],
 
             _misc_sprites: misc_sprites,
         }
@@ -222,19 +219,15 @@ impl<'a> BattleScreenDisplay<'a> {
             }
         }
 
-        if self.current_animation.is_none() {
-            self.current_animation = self
-                .animations_to_play
-                .pop_front()
-                .map(|anim| AnimationState::for_animation(anim, obj));
+        let mut animations_to_remove = vec![];
+        for (i, animation) in self.animations.iter_mut().enumerate() {
+            if animation.update(&mut self.objs, obj, current_battle_state) {
+                animations_to_remove.push(i);
+            }
         }
 
-        if let Some(ref mut animation) = self.current_animation {
-            if animation.update(&mut self.objs, obj, current_battle_state) {
-                self.current_animation = None;
-            }
-
-            return false;
+        for &animation_to_remove in animations_to_remove.iter().rev() {
+            self.animations.swap_remove(animation_to_remove);
         }
 
         for (i, player_shield) in self.objs.player_shield.iter_mut().enumerate() {
@@ -284,8 +277,9 @@ impl<'a> BattleScreenDisplay<'a> {
         true
     }
 
-    pub fn add_animation(&mut self, anim: DisplayAnimation) {
-        self.animations_to_play.push_back(anim);
+    pub fn add_animation(&mut self, anim: DisplayAnimation, obj: &'a ObjectController) {
+        self.animations
+            .push(AnimationState::for_animation(anim, obj))
     }
 }
 
