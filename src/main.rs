@@ -121,7 +121,7 @@ fn main(mut gba: agb::Gba) -> ! {
     };
 
     let mut dice = PlayerDice {
-        dice: vec![basic_die; 5],
+        dice: vec![basic_die.clone(); 2],
     };
 
     let mut current_level = 1;
@@ -148,12 +148,17 @@ fn main(mut gba: agb::Gba) -> ! {
             break;
         }
     }
+
     loop {
         dice = customise::customise_screen(&mut agb, dice.clone(), &mut card_descriptions);
 
         battle::battle_screen(&mut agb, dice.clone(), current_level);
 
         current_level += 1;
+
+        if current_level % 5 == 0 {
+            dice.dice.push(basic_die.clone());
+        }
     }
 }
 
