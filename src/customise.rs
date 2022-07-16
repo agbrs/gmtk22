@@ -125,7 +125,7 @@ fn create_net<'a>(gfx: &'a ObjectController, die: &'_ Die, modified: &[usize]) -
         objects.push(obj);
     }
 
-    for &m in modified {
+    for &m in modified.iter().chain(core::iter::once(&3)) {
         let mut obj = gfx.object(gfx.sprite(MODIFIED_BOX));
         let (x, y) = screen_position_for_index(m);
         obj.set_x((x - 32 / 2) as u16);
