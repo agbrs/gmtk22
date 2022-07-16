@@ -149,6 +149,10 @@ pub(crate) fn battle_screen(agb: &mut Agb, player_dice: PlayerDice) {
             }
         }
 
+        if input.is_just_pressed(Button::START) {
+            current_battle_state.accept_rolls();
+        }
+
         // update the dice display to display the current values
         for (die_obj, current_roll) in dice_display
             .iter_mut()
