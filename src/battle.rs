@@ -111,7 +111,7 @@ struct PlayerState {
 #[derive(Debug)]
 pub enum EnemyAttack {
     Shoot(u32),
-    Shield,
+    Shield(u32),
     Heal(u32),
 }
 
@@ -125,7 +125,7 @@ impl EnemyAttack {
             EnemyAttack::Shoot(damage) => {
                 if *damage > player_state.shield_count {
                     if player_state.shield_count > 0 {
-                        player_state.shield_count -= 1;
+                        player_state.shield_count = 0;
                         Some(DisplayAnimation::EnemyBreakShield)
                     } else {
                         player_state.health = player_state.health.saturating_sub(*damage);
@@ -135,13 +135,9 @@ impl EnemyAttack {
                     None
                 }
             }
-            EnemyAttack::Shield => {
-                if enemy_state.shield_count < 5 {
-                    enemy_state.shield_count += 1;
-                    Some(DisplayAnimation::EnemyNewShield)
-                } else {
-                    None
-                }
+            EnemyAttack::Shield(shield) => {
+                enemy_state.shield_count = enemy_state.shield_count.max(*shield);
+                Some(DisplayAnimation::EnemyNewShield)
             }
             EnemyAttack::Heal(amount) => {
                 enemy_state.health = enemy_state.max_health.min(enemy_state.health + amount);
@@ -162,7 +158,7 @@ impl EnemyAttackState {
     fn attack_type(&self) -> EnemyAttackType {
         match self.attack {
             EnemyAttack::Shoot(_) => EnemyAttackType::Attack,
-            EnemyAttack::Shield => EnemyAttackType::Shield,
+            EnemyAttack::Shield(_) => EnemyAttackType::Shield,
             EnemyAttack::Heal(_) => EnemyAttackType::Heal,
         }
     }
@@ -171,7 +167,7 @@ impl EnemyAttackState {
         match self.attack {
             EnemyAttack::Shoot(i) => Some(i),
             EnemyAttack::Heal(i) => Some(i),
-            EnemyAttack::Shield => None,
+            EnemyAttack::Shield(i) => Some(i),
         }
     }
 
@@ -221,9 +217,7 @@ impl CurrentBattleState {
 
         // shield
         let shield = face_counts.entry(Face::Shield).or_default();
-        if self.player.shield_count < *shield {
-            self.player.shield_count += 1;
-        }
+        self.player.shield_count = self.player.shield_count.max(*shield);
 
         // shooting
         let shoot = *face_counts.entry(Face::Shoot).or_default();
@@ -235,8 +229,9 @@ impl CurrentBattleState {
 
         if shoot_power > enemy_shield_equiv {
             if enemy_shield_equiv > 0 {
-                self.enemy.shield_count -= 1;
+                self.enemy.shield_count = 0;
             } else {
+                self.enemy.shield_count = 0;
                 self.enemy.health = self.enemy.health.saturating_sub(shoot_power);
             }
         }
