@@ -6,7 +6,11 @@ use crate::{
     level_generation::generate_attack,
     Agb, EnemyAttackType, Face, PlayerDice, Ship,
 };
-use agb::{hash_map::HashMap, input::Button};
+use agb::{
+    display::object::{Object, ObjectController},
+    hash_map::HashMap,
+    input::Button,
+};
 use alloc::vec::Vec;
 
 const MALFUNCTION_COOLDOWN_FRAMES: u32 = 5 * 60;
@@ -184,7 +188,7 @@ struct EnemyState {
 }
 
 #[derive(Debug)]
-struct CurrentBattleState {
+pub struct CurrentBattleState {
     player: PlayerState,
     enemy: EnemyState,
     rolled_dice: RolledDice,
@@ -303,6 +307,64 @@ impl CurrentBattleState {
 
 const HEALTH_BAR_WIDTH: usize = 48;
 
+pub struct BattleScreenDisplay<'a> {
+    dice: Vec<Object<'a>>,
+    dice_cooldowns: Vec<HealthBar<'a>>,
+}
+
+impl<'a> BattleScreenDisplay<'a> {
+    pub fn new(obj: &'a ObjectController, current_battle_state: &CurrentBattleState) -> Self {
+        let dice: Vec<_> = current_battle_state
+            .rolled_dice
+            .faces_to_render()
+            .enumerate()
+            .map(|(i, (face, _))| {
+                let mut die_obj = obj.object(obj.sprite(FACE_SPRITES.sprite_for_face(face)));
+
+                die_obj.set_y(120).set_x(i as u16 * 40 + 28).show();
+
+                die_obj
+            })
+            .collect();
+
+        let dice_cooldowns: Vec<_> = dice
+            .iter()
+            .enumerate()
+            .map(|(i, _)| {
+                let mut cooldown_bar =
+                    HealthBar::new((i as i32 * 40 + 28, 120 - 8).into(), 24, obj);
+                cooldown_bar.hide();
+                cooldown_bar
+            })
+            .collect();
+
+        Self {
+            dice,
+            dice_cooldowns,
+        }
+    }
+
+    pub fn update(&mut self, obj: &'a ObjectController, current_battle_state: &CurrentBattleState) {
+        // update the dice display to display the current values
+        for ((die_obj, (current_face, cooldown)), cooldown_healthbar) in self
+            .dice
+            .iter_mut()
+            .zip(current_battle_state.rolled_dice.faces_to_render())
+            .zip(self.dice_cooldowns.iter_mut())
+        {
+            die_obj.set_sprite(obj.sprite(FACE_SPRITES.sprite_for_face(current_face)));
+
+            if let Some(cooldown) = cooldown {
+                cooldown_healthbar
+                    .set_value((cooldown * 24 / MALFUNCTION_COOLDOWN_FRAMES) as usize, obj);
+                cooldown_healthbar.show();
+            } else {
+                cooldown_healthbar.hide();
+            }
+        }
+    }
+}
+
 pub(crate) fn battle_screen(agb: &mut Agb, player_dice: PlayerDice, current_level: u32) {
     let obj = &agb.obj;
 
@@ -349,28 +411,7 @@ pub(crate) fn battle_screen(agb: &mut Agb, player_dice: PlayerDice, current_leve
         current_level,
     };
 
-    let mut dice_display: Vec<_> = current_battle_state
-        .rolled_dice
-        .faces_to_render()
-        .enumerate()
-        .map(|(i, (face, _))| {
-            let mut die_obj = obj.object(obj.sprite(FACE_SPRITES.sprite_for_face(face)));
-
-            die_obj.set_y(120).set_x(i as u16 * 40 + 28).show();
-
-            die_obj
-        })
-        .collect();
-
-    let mut dice_cooldowns: Vec<_> = dice_display
-        .iter()
-        .enumerate()
-        .map(|(i, _)| {
-            let mut cooldown_bar = HealthBar::new((i as i32 * 40 + 28, 120 - 8).into(), 24, obj);
-            cooldown_bar.hide();
-            cooldown_bar
-        })
-        .collect();
+    let mut battle_screen_display = BattleScreenDisplay::new(obj, &current_battle_state);
 
     let mut player_shield_display: Vec<_> = (0..5)
         .into_iter()
@@ -492,22 +533,7 @@ pub(crate) fn battle_screen(agb: &mut Agb, player_dice: PlayerDice, current_leve
             agb.sfx.roll_multi();
         }
 
-        // update the dice display to display the current values
-        for ((die_obj, (current_face, cooldown)), cooldown_healthbar) in dice_display
-            .iter_mut()
-            .zip(current_battle_state.rolled_dice.faces_to_render())
-            .zip(dice_cooldowns.iter_mut())
-        {
-            die_obj.set_sprite(obj.sprite(FACE_SPRITES.sprite_for_face(current_face)));
-
-            if let Some(cooldown) = cooldown {
-                cooldown_healthbar
-                    .set_value((cooldown * 24 / MALFUNCTION_COOLDOWN_FRAMES) as usize, obj);
-                cooldown_healthbar.show();
-            } else {
-                cooldown_healthbar.hide();
-            }
-        }
+        battle_screen_display.update(obj, &current_battle_state);
 
         for (i, player_shield) in player_shield_display.iter_mut().enumerate() {
             if i < current_battle_state.player.shield_count as usize {
