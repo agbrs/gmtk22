@@ -180,9 +180,9 @@ pub(crate) fn customise_screen(
 
     select_box.show();
 
-    let mut selected_dice = agb.obj.object(agb.obj.sprite(SELECTED_BOX.sprite(0)));
+    let mut selected_dice = agb.obj.object(agb.obj.sprite(SELECTED_BOX));
     selected_dice.hide();
-    let mut selected_face = agb.obj.object(agb.obj.sprite(SELECTED_BOX.sprite(0)));
+    let mut selected_face = agb.obj.object(agb.obj.sprite(SELECTED_BOX));
     selected_face.hide();
 
     let mut counter = 0usize;
