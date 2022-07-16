@@ -5,6 +5,7 @@ use agb::{
         tiled::{RegularMap, TileSet, TileSetting},
         HEIGHT, WIDTH,
     },
+    hash_map::HashMap,
     include_gfx,
     input::{Button, Tri},
 };
@@ -148,6 +149,16 @@ fn create_upgrade_objects<'a>(gfx: &'a ObjectController, upgrades: &[Face]) -> V
 }
 
 fn generate_upgrades(level: u32) -> Vec<Face> {
+    let mut upgrade_values = HashMap::new();
+
+    upgrade_values.insert(Face::Shoot, 5);
+    upgrade_values.insert(Face::Shield, 5);
+    upgrade_values.insert(Face::DoubleShot, 10);
+    upgrade_values.insert(Face::TripleShot, 20);
+    upgrade_values.insert(Face::Malfunction, -2);
+    upgrade_values.insert(Face::Bypass, 7);
+    upgrade_values.insert(Face::Disrupt, 10);
+
     vec![Face::DoubleShot, Face::TripleShot, Face::Bypass]
 }
 
