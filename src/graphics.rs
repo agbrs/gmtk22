@@ -226,6 +226,8 @@ impl<'a> NumberDisplay<'a> {
             return;
         }
 
+        self.value = new_value;
+
         self.objects.clear();
 
         if let Some(mut new_value) = new_value {
