@@ -1,8 +1,5 @@
 use crate::{
-    graphics::{
-        FractionDisplay, HealthBar, NumberDisplay, BULLET_SPRITE, ENEMY_ATTACK_SPRITES, SELECT_BOX,
-        SHIP_SPRITES,
-    },
+    graphics::{BULLET_SPRITE, SELECT_BOX, SHIP_SPRITES},
     level_generation::generate_attack,
     Agb, EnemyAttackType, Face, PlayerDice, Ship,
 };
