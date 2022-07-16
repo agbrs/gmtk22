@@ -40,6 +40,10 @@ impl RolledDie {
         self.face != Face::Malfunction || self.cooldown == 0
     }
 
+    fn can_reroll_after_accept(&self) -> bool {
+        self.face != Face::Malfunction
+    }
+
     fn cooldown(&self) -> Option<u32> {
         if self.face == Face::Malfunction && self.cooldown > 0 {
             Some(self.cooldown)
@@ -214,15 +218,21 @@ impl CurrentBattleState {
             }
         }
 
-        // reroll everything after accepting
+        // reroll non-malfunctions after accepting
         for i in 0..self.player_dice.dice.len() {
-            self.roll_die(i, ROLL_TIME_FRAMES_ALL);
+            self.roll_die(i, ROLL_TIME_FRAMES_ALL, true);
         }
     }
 
-    fn roll_die(&mut self, die_index: usize, time: u32) {
+    fn roll_die(&mut self, die_index: usize, time: u32, is_after_accept: bool) {
         if let DieState::Rolled(ref selected_rolled_die) = self.rolled_dice.rolls[die_index] {
-            if selected_rolled_die.can_reroll() {
+            let can_reroll = if is_after_accept {
+                selected_rolled_die.can_reroll_after_accept()
+            } else {
+                selected_rolled_die.can_reroll()
+            };
+
+            if can_reroll {
                 self.rolled_dice.rolls[die_index] =
                     DieState::Rolling(time, self.player_dice.dice[die_index].roll());
             }
@@ -424,7 +434,7 @@ pub(crate) fn battle_screen(agb: &mut Agb, player_dice: PlayerDice, current_leve
         }
 
         if input.is_just_pressed(Button::A) {
-            current_battle_state.roll_die(selected_die, ROLL_TIME_FRAMES_ONE);
+            current_battle_state.roll_die(selected_die, ROLL_TIME_FRAMES_ONE, false);
             agb.sfx.roll();
         }
 
