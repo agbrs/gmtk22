@@ -16,6 +16,9 @@ pub const ENEMY_ATTACK_SPRITES: &EnemyAttackSprites = &EnemyAttackSprites::new()
 pub const SELECT_BOX: &Tag = SPRITES.tags().get("selection");
 pub const SELECTED_BOX: &Tag = SPRITES.tags().get("selected");
 
+pub const BULLET_SPRITE: &Sprite = SPRITES.tags().get("bullet").sprite(0);
+pub const SHIELD: &Tag = SPRITES.tags().get("ship shield");
+
 pub const SHIP_SPRITES: &ShipSprites = &ShipSprites::load_ship_sprites();
 
 pub const SMALL_SPRITES: &SmallSprites = &SmallSprites {};

@@ -1,7 +1,7 @@
 use crate::{
     graphics::{
-        FractionDisplay, HealthBar, NumberDisplay, ENEMY_ATTACK_SPRITES, FACE_SPRITES, SELECT_BOX,
-        SHIP_SPRITES,
+        FractionDisplay, HealthBar, NumberDisplay, BULLET_SPRITE, ENEMY_ATTACK_SPRITES,
+        FACE_SPRITES, SELECT_BOX, SHIP_SPRITES,
     },
     level_generation::generate_attack,
     Agb, EnemyAttackType, Face, PlayerDice, Ship,
@@ -449,6 +449,12 @@ pub(crate) fn battle_screen(agb: &mut Agb, player_dice: PlayerDice, current_leve
             (attack_obj, attack_cooldown, attack_number_display)
         })
         .collect();
+
+    let mut enemy_bullet_obj = obj.object(obj.sprite(BULLET_SPRITE));
+    enemy_bullet_obj.hide().set_hflip(true);
+
+    let mut player_bullet_obj = obj.object(obj.sprite(BULLET_SPRITE));
+    player_bullet_obj.hide();
 
     let mut selected_die = 0usize;
     let mut input = agb::input::ButtonController::new();
