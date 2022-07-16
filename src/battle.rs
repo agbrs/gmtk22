@@ -116,6 +116,7 @@ impl RolledDice {
             match face {
                 Face::DoubleShot => *face_counts.entry(Face::Shoot).or_default() += 2,
                 Face::TripleShot => *face_counts.entry(Face::Shoot).or_default() += 3,
+                Face::DoubleShield => *face_counts.entry(Face::Shield).or_default() += 2,
                 other => *face_counts.entry(other).or_default() += 1,
             }
         }
@@ -177,7 +178,7 @@ impl RolledDice {
             DieState::Rolled(rolled_die) => Some(rolled_die),
             _ => None,
         }) {
-            if roll.face == Face::DoubleShot {
+            if roll.face == Face::DoubleShot || roll.face == Face::DoubleShield {
                 roll.cooldown = MALFUNCTION_COOLDOWN_FRAMES;
                 roll.face = Face::Malfunction;
             }

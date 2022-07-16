@@ -42,6 +42,7 @@ pub enum Face {
     Blank,
     Disrupt,
     MalfunctionShot,
+    DoubleShield,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Hash)]
