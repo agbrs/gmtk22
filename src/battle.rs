@@ -127,6 +127,18 @@ impl CurrentBattleState {
             self.player.shield_count += 1;
         }
 
+        // shooting
+        let shoot = *face_counts.entry(Face::Attack).or_default();
+        let shoot_power = shoot * shoot;
+
+        if shoot_power > self.enemy.shield_count {
+            if self.enemy.shield_count > 0 {
+                self.enemy.shield_count -= 1;
+            } else {
+                self.enemy.health = self.enemy.health.saturating_sub(shoot_power);
+            }
+        }
+
         // reroll everything after accepting
         for i in 0..self.player_dice.dice.len() {
             self.roll_die(i);
