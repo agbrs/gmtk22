@@ -15,7 +15,7 @@ pub const FACE_SPRITES: &FaceSprites = &FaceSprites::load_face_sprites();
 pub const ENEMY_ATTACK_SPRITES: &EnemyAttackSprites = &EnemyAttackSprites::new();
 pub const SELECT_BOX: &Tag = SPRITES.tags().get("selection");
 pub const SELECTED_BOX: &Sprite = SPRITES.tags().get("selected").sprite(0);
-pub const MODIFIED_BOX: &Sprite = SPRITES.tags().get("selected").sprite(0);
+pub const MODIFIED_BOX: &Sprite = SPRITES.tags().get("modified").sprite(0);
 
 pub const BULLET_SPRITE: &Sprite = SPRITES.tags().get("bullet").sprite(0);
 pub const DISRUPT_BULLET: &Sprite = SPRITES.tags().get("disrupt bullet").sprite(0);
