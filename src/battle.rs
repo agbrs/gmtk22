@@ -251,11 +251,22 @@ pub(crate) fn battle_screen(agb: &mut Agb, player_dice: PlayerDice) {
         })
         .collect();
 
-    let mut player_healthbar = HealthBar::new((32, player_y - 8).into(), HEALTH_BAR_WIDTH, obj);
-    let mut enemy_healthbar = HealthBar::new((160, player_y - 8).into(), HEALTH_BAR_WIDTH, obj);
+    let player_healthbar_x = 32;
+    let enemy_healthbar_x = 160;
+    let mut player_healthbar = HealthBar::new(
+        (player_healthbar_x, player_y - 8).into(),
+        HEALTH_BAR_WIDTH,
+        obj,
+    );
+    let mut enemy_healthbar = HealthBar::new(
+        (enemy_healthbar_x, player_y - 8).into(),
+        HEALTH_BAR_WIDTH,
+        obj,
+    );
 
-    let mut player_health_display = NumberDisplay::new((32, player_y).into(), 3, obj);
-    let mut enemy_health_display = NumberDisplay::new((160, player_y).into(), 3, obj);
+    let mut player_health_display =
+        NumberDisplay::new((player_healthbar_x, player_y).into(), 3, obj);
+    let mut enemy_health_display = NumberDisplay::new((enemy_healthbar_x, player_y).into(), 3, obj);
 
     let mut selected_die = 0usize;
     let mut input = agb::input::ButtonController::new();
