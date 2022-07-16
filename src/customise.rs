@@ -1,15 +1,16 @@
 use agb::{
     display::{
         object::{Object, ObjectController},
-        HEIGHT,
+        HEIGHT, WIDTH,
     },
     input::{Button, Tri},
 };
+use alloc::vec;
 use alloc::vec::Vec;
 
 use crate::{
     graphics::{FACE_SPRITES, SELECT_BOX},
-    Agb, Die, PlayerDice,
+    Agb, Die, Face, PlayerDice,
 };
 
 enum CustomiseState {
@@ -120,11 +121,40 @@ fn create_net<'a>(gfx: &'a ObjectController, die: &'_ Die) -> Vec<Object<'a>> {
     objects
 }
 
+fn upgrade_position(idx: usize) -> (u32, u32) {
+    (
+        (WIDTH - 80) as u32,
+        (idx * 32 + HEIGHT as usize - 3 * 32) as u32,
+    )
+}
+
+fn create_upgrade_objects<'a>(gfx: &'a ObjectController, upgrades: &[Face]) -> Vec<Object<'a>> {
+    let mut objects = Vec::new();
+    for (idx, &upgrade) in upgrades.iter().enumerate() {
+        let mut obj = gfx.object(gfx.sprite(FACE_SPRITES.sprite_for_face(upgrade)));
+        let (x, y) = upgrade_position(idx);
+        obj.set_x((x - 24 / 2) as u16);
+        obj.set_y((y - 24 / 2) as u16);
+
+        obj.show();
+
+        objects.push(obj);
+    }
+    objects
+}
+
+fn generate_upgrades(difficulty: u32) -> Vec<Face> {
+    vec![Face::Attack, Face::Shield, Face::Malfunction]
+}
+
 pub(crate) fn customise_screen(agb: &mut Agb, mut player_dice: PlayerDice) -> PlayerDice {
     // create the dice
 
     let mut _net = create_net(&agb.obj, &player_dice.dice[0]);
-    let _dice = create_dice_display(&agb.obj, &player_dice);
+    let mut _dice = create_dice_display(&agb.obj, &player_dice);
+
+    let mut upgrades = generate_upgrades(0);
+    let mut _upgrade_objects = create_upgrade_objects(&agb.obj, &upgrades);
 
     let mut input = agb::input::ButtonController::new();
 
@@ -180,13 +210,44 @@ pub(crate) fn customise_screen(agb: &mut Agb, mut player_dice: PlayerDice) -> Pl
 
                 if input.is_just_pressed(Button::B) {
                     state = CustomiseState::DiceSelect { dice: *dice };
+                } else if input.is_just_pressed(Button::A) {
+                    state = CustomiseState::UpgradeSelect {
+                        dice: *dice,
+                        face: *face,
+                        upgrade: 0,
+                    };
                 }
             }
             CustomiseState::UpgradeSelect {
                 dice,
                 face,
                 upgrade,
-            } => {}
+            } => {
+                *upgrade =
+                    (*upgrade as isize + ud as isize).rem_euclid(upgrades.len() as isize) as usize;
+
+                let (x, y) = upgrade_position(*upgrade);
+                select_box.set_x((x - 32 / 2) as u16);
+                select_box.set_y((y - 32 / 2) as u16);
+
+                if input.is_just_pressed(Button::B) {
+                    state = CustomiseState::FaceSelect {
+                        dice: *dice,
+                        face: *face,
+                    };
+                } else if input.is_just_pressed(Button::A) {
+                    player_dice.dice[*dice].faces[*face] = upgrades[*upgrade];
+                    upgrades.remove(*upgrade);
+                    _upgrade_objects = create_upgrade_objects(&agb.obj, &upgrades);
+
+                    _net = create_net(&agb.obj, &player_dice.dice[*dice]);
+                    _dice = create_dice_display(&agb.obj, &player_dice);
+                    state = CustomiseState::FaceSelect {
+                        dice: *dice,
+                        face: *face,
+                    };
+                }
+            }
         }
 
         if input.is_just_pressed(Button::START) {
