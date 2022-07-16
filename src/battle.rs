@@ -361,16 +361,18 @@ pub(crate) fn battle_screen(agb: &mut Agb, player_dice: PlayerDice, current_leve
 
     let num_dice = player_dice.dice.len();
 
+    let enemy_health = 10 + current_level * agb::rng::gen().rem_euclid(4) as u32;
+
     let mut current_battle_state = CurrentBattleState {
         player: PlayerState {
             shield_count: 0,
-            health: 120,
-            max_health: 120,
+            health: 20,
+            max_health: 20,
         },
         enemy: EnemyState {
             shield_count: 0,
-            health: 50,
-            max_health: 50,
+            health: enemy_health,
+            max_health: enemy_health,
         },
         rolled_dice: RolledDice {
             rolls: player_dice
