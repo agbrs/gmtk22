@@ -5,7 +5,6 @@ use crate::{
     Agb, EnemyAttackType, Face, PlayerDice, Ship,
 };
 use agb::{hash_map::HashMap, input::Button};
-use alloc::vec;
 use alloc::vec::Vec;
 
 const MALFUNCTION_COOLDOWN_FRAMES: u32 = 5 * 60;
@@ -116,12 +115,22 @@ struct EnemyAttackState {
     max_cooldown: u32,
 }
 
+impl EnemyAttackState {
+    fn attack_type(&self) -> EnemyAttackType {
+        match self.attack {
+            EnemyAttack::Shoot(_) => EnemyAttackType::Attack,
+            EnemyAttack::Shield => EnemyAttackType::Shield,
+            EnemyAttack::Heal(_) => EnemyAttackType::Heal,
+        }
+    }
+}
+
 #[derive(Debug)]
 struct EnemyState {
     shield_count: u32,
     health: u32,
     max_health: u32,
-    attacks: Vec<EnemyAttackState>,
+    attacks: [Option<EnemyAttackState>; 2],
 }
 
 #[derive(Debug)]
@@ -208,7 +217,7 @@ pub(crate) fn battle_screen(agb: &mut Agb, player_dice: PlayerDice) {
             shield_count: 5,
             health: 38,
             max_health: 50,
-            attacks: vec![],
+            attacks: [None, None],
         },
         rolled_dice: RolledDice {
             rolls: player_dice
@@ -315,7 +324,7 @@ pub(crate) fn battle_screen(agb: &mut Agb, player_dice: PlayerDice) {
             let mut attack_cooldown = HealthBar::new(attack_obj_position + (32, 8).into(), 48, obj);
             attack_cooldown.hide();
 
-            (attack_obj_position, attack_cooldown)
+            (attack_obj, attack_cooldown)
         })
         .collect();
 
@@ -409,10 +418,27 @@ pub(crate) fn battle_screen(agb: &mut Agb, player_dice: PlayerDice) {
             obj,
         );
 
+        for (i, attack) in current_battle_state.enemy.attacks.iter().enumerate() {
+            let attack_display = &mut enemy_attack_display[i];
+
+            if let Some(attack) = attack {
+                attack_display.0.show().set_sprite(
+                    obj.sprite(ENEMY_ATTACK_SPRITES.sprite_for_attack(attack.attack_type())),
+                );
+                attack_display
+                    .1
+                    .set_value((attack.cooldown * 48 / attack.max_cooldown) as usize, obj);
+                attack_display.1.show();
+            } else {
+                attack_display.0.hide();
+                attack_display.1.hide();
+            }
+        }
+
         select_box_obj
             .set_y(120 - 4)
-            .set_x(selected_die as u16 * 40 + 28 - 4);
-        select_box_obj.set_sprite(agb.obj.sprite(SELECT_BOX.animation_sprite(counter / 10)));
+            .set_x(selected_die as u16 * 40 + 28 - 4)
+            .set_sprite(agb.obj.sprite(SELECT_BOX.animation_sprite(counter / 10)));
 
         agb.star_background.update();
         agb.vblank.wait_for_vblank();
