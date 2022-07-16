@@ -14,7 +14,7 @@ use crate::{
 use super::{CurrentBattleState, EnemyAttackState, MALFUNCTION_COOLDOWN_FRAMES};
 
 #[derive(Clone, Copy)]
-pub enum DisplayAnimation {
+pub enum Actions {
     PlayerShootEnemy,
     EnemyShootPlayer,
     PlayerBreakShield,
@@ -277,7 +277,7 @@ impl<'a> BattleScreenDisplay<'a> {
         true
     }
 
-    pub fn add_animation(&mut self, anim: DisplayAnimation, obj: &'a ObjectController) {
+    pub fn add_animation(&mut self, anim: Actions, obj: &'a ObjectController) {
         self.animations
             .push(AnimationState::for_animation(anim, obj))
     }
@@ -347,29 +347,29 @@ enum AnimationState<'a> {
 }
 
 impl<'a> AnimationState<'a> {
-    fn for_animation(a: DisplayAnimation, obj: &'a ObjectController) -> Self {
+    fn for_animation(a: Actions, obj: &'a ObjectController) -> Self {
         match a {
-            DisplayAnimation::PlayerShootEnemy => Self::PlayerShootEnemy {
+            Actions::PlayerShootEnemy => Self::PlayerShootEnemy {
                 x_position: 64,
                 bullet: obj.object(obj.sprite(BULLET_SPRITE)),
             },
-            DisplayAnimation::PlayerBreakShield => Self::PlayerBreakShield {
+            Actions::PlayerBreakShield => Self::PlayerBreakShield {
                 bullet: obj.object(obj.sprite(BULLET_SPRITE)),
                 x_position: 64,
                 shield_break_frame: 0,
             },
-            DisplayAnimation::PlayerNewShield => Self::PlayerNewShield { shield_frame: 6 },
-            DisplayAnimation::EnemyShootPlayer => Self::EnemyShootPlayer {
+            Actions::PlayerNewShield => Self::PlayerNewShield { shield_frame: 6 },
+            Actions::EnemyShootPlayer => Self::EnemyShootPlayer {
                 bullet: obj.object(obj.sprite(BULLET_SPRITE)),
                 x_position: 176,
             },
-            DisplayAnimation::EnemyBreakShield => Self::EnemyBreakShield {
+            Actions::EnemyBreakShield => Self::EnemyBreakShield {
                 bullet: obj.object(obj.sprite(BULLET_SPRITE)),
                 x_position: 176,
                 shield_break_frame: 0,
             },
-            DisplayAnimation::EnemyNewShield => Self::EnemyNewShield { shield_frame: 6 },
-            DisplayAnimation::EnemyHeal => AnimationState::EnemyHeal { heal_frame: 0 },
+            Actions::EnemyNewShield => Self::EnemyNewShield { shield_frame: 6 },
+            Actions::EnemyHeal => AnimationState::EnemyHeal { heal_frame: 0 },
         }
     }
 

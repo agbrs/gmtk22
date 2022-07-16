@@ -5,7 +5,7 @@ use agb::{hash_map::HashMap, input::Button};
 use alloc::vec;
 use alloc::vec::Vec;
 
-use self::display::{BattleScreenDisplay, DisplayAnimation};
+use self::display::{Actions, BattleScreenDisplay};
 
 mod display;
 
@@ -119,16 +119,16 @@ impl EnemyAttack {
         &self,
         player_state: &mut PlayerState,
         enemy_state: &mut EnemyState,
-    ) -> Option<DisplayAnimation> {
+    ) -> Option<Actions> {
         match self {
             EnemyAttack::Shoot(damage) => {
                 if *damage > player_state.shield_count {
                     if player_state.shield_count > 0 {
                         player_state.shield_count = 0;
-                        Some(DisplayAnimation::EnemyBreakShield)
+                        Some(Actions::EnemyBreakShield)
                     } else {
                         player_state.health = player_state.health.saturating_sub(*damage);
-                        Some(DisplayAnimation::EnemyShootPlayer)
+                        Some(Actions::EnemyShootPlayer)
                     }
                 } else {
                     None
@@ -139,14 +139,14 @@ impl EnemyAttack {
                 enemy_state.shield_count = enemy_state.shield_count.max(*shield);
 
                 if should_animate {
-                    Some(DisplayAnimation::EnemyNewShield)
+                    Some(Actions::EnemyNewShield)
                 } else {
                     None
                 }
             }
             EnemyAttack::Heal(amount) => {
                 enemy_state.health = enemy_state.max_health.min(enemy_state.health + amount);
-                Some(DisplayAnimation::EnemyHeal)
+                Some(Actions::EnemyHeal)
             }
         }
     }
@@ -181,7 +181,7 @@ impl EnemyAttackState {
         &mut self,
         player_state: &mut PlayerState,
         enemy_state: &mut EnemyState,
-    ) -> (Option<DisplayAnimation>, bool) {
+    ) -> (Option<Actions>, bool) {
         if self.cooldown == 0 {
             return (self.attack.apply_effect(player_state, enemy_state), true);
         }
@@ -210,7 +210,7 @@ pub struct CurrentBattleState {
 }
 
 impl CurrentBattleState {
-    fn accept_rolls(&mut self) -> Vec<DisplayAnimation> {
+    fn accept_rolls(&mut self) -> Vec<Actions> {
         let mut animations = vec![];
 
         let mut face_counts: HashMap<Face, u32> = HashMap::new();
@@ -227,7 +227,7 @@ impl CurrentBattleState {
 
         if *shield > self.player.shield_count {
             self.player.shield_count = *shield;
-            animations.push(DisplayAnimation::PlayerNewShield);
+            animations.push(Actions::PlayerNewShield);
         }
 
         // shooting
@@ -247,9 +247,9 @@ impl CurrentBattleState {
             }
 
             if self.enemy.shield_count > 0 {
-                animations.push(DisplayAnimation::PlayerBreakShield);
+                animations.push(Actions::PlayerBreakShield);
             } else {
-                animations.push(DisplayAnimation::PlayerShootEnemy);
+                animations.push(Actions::PlayerShootEnemy);
             }
         }
 
@@ -320,7 +320,7 @@ impl CurrentBattleState {
         }
     }
 
-    fn update(&mut self) -> Vec<DisplayAnimation> {
+    fn update(&mut self) -> Vec<Actions> {
         let mut animations = vec![];
 
         for attack in self.attacks.iter_mut() {
