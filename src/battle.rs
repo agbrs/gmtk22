@@ -1,9 +1,9 @@
-use crate::{Agb, Die, Face, PlayerDice, ShipSprites, FACE_SPRITES, SELECT_BOX, SHIP_SPRITES};
+use crate::{Agb, Face, PlayerDice, FACE_SPRITES, SELECT_BOX, SHIP_SPRITES};
 use agb::{hash_map::HashMap, input::Button};
 use alloc::vec::Vec;
 
 const MALFUNCTION_COOLDOWN_FRAMES: u32 = 3 * 60;
-const ROLL_TIME_FRAMES: u32 = 1 * 60;
+const ROLL_TIME_FRAMES: u32 = 60;
 
 /// A face of the rolled die and it's cooldown (should it be a malfunction)
 #[derive(Debug)]
@@ -73,17 +73,11 @@ impl RolledDice {
         })
     }
 
-    fn faces_to_render<'a>(
-        &'a self,
-        player_dice: &'a PlayerDice,
-    ) -> impl Iterator<Item = Face> + 'a {
-        self.rolls
-            .iter()
-            .zip(player_dice.dice.iter())
-            .map(|(rolled_die, player_die)| match rolled_die {
-                DieState::Rolling(_, face) => *face,
-                DieState::Rolled(RolledDie { face, .. }) => *face,
-            })
+    fn faces_to_render(&self) -> impl Iterator<Item = Face> + '_ {
+        self.rolls.iter().map(|rolled_die| match rolled_die {
+            DieState::Rolling(_, face) => *face,
+            DieState::Rolled(RolledDie { face, .. }) => *face,
+        })
     }
 }
 
@@ -163,7 +157,7 @@ pub(crate) fn battle_screen(agb: &mut Agb, player_dice: PlayerDice) {
 
     let mut dice_display: Vec<_> = current_battle_state
         .rolled_dice
-        .faces_to_render(&player_dice)
+        .faces_to_render()
         .enumerate()
         .map(|(i, face)| {
             let mut die_obj = obj.object(obj.sprite(FACE_SPRITES.sprite_for_face(face)));
@@ -209,11 +203,10 @@ pub(crate) fn battle_screen(agb: &mut Agb, player_dice: PlayerDice) {
         }
 
         // update the dice display to display the current values
-        for (die_obj, current_roll) in dice_display.iter_mut().zip(
-            current_battle_state
-                .rolled_dice
-                .faces_to_render(&player_dice),
-        ) {
+        for (die_obj, current_roll) in dice_display
+            .iter_mut()
+            .zip(current_battle_state.rolled_dice.faces_to_render())
+        {
             die_obj.set_sprite(obj.sprite(FACE_SPRITES.sprite_for_face(current_roll)));
         }
 
