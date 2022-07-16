@@ -14,7 +14,7 @@ use alloc::vec;
 use alloc::vec::Vec;
 
 use crate::{
-    graphics::{FACE_SPRITES, SELECTED_BOX, SELECT_BOX},
+    graphics::{FACE_SPRITES, MODIFIED_BOX, SELECTED_BOX, SELECT_BOX},
     Agb, Die, Face, PlayerDice,
 };
 
@@ -112,13 +112,24 @@ fn create_dice_display<'a>(gfx: &'a ObjectController, dice: &'_ PlayerDice) -> V
     objects
 }
 
-fn create_net<'a>(gfx: &'a ObjectController, die: &'_ Die) -> Vec<Object<'a>> {
+fn create_net<'a>(gfx: &'a ObjectController, die: &'_ Die, modified: &[usize]) -> Vec<Object<'a>> {
     let mut objects = Vec::new();
     for (idx, &face) in die.faces.iter().enumerate() {
         let mut obj = gfx.object(gfx.sprite(FACE_SPRITES.sprite_for_face(face)));
         let (x, y) = screen_position_for_index(idx);
         obj.set_x((x - 24 / 2) as u16);
         obj.set_y((y - 24 / 2) as u16);
+
+        obj.show();
+
+        objects.push(obj);
+    }
+
+    for &m in modified {
+        let mut obj = gfx.object(gfx.sprite(MODIFIED_BOX));
+        let (x, y) = screen_position_for_index(m);
+        obj.set_x((x - 32 / 2) as u16);
+        obj.set_y((y - 32 / 2) as u16);
 
         obj.show();
 
@@ -168,7 +179,7 @@ pub(crate) fn customise_screen(
 
     // create the dice
 
-    let mut _net = create_net(&agb.obj, &player_dice.dice[0]);
+    let mut _net = create_net(&agb.obj, &player_dice.dice[0], &[]);
     let mut _dice = create_dice_display(&agb.obj, &player_dice);
 
     let mut upgrades = crate::level_generation::generate_upgrades(level);
@@ -195,7 +206,7 @@ pub(crate) fn customise_screen(
         upgrade: 0,
     };
 
-    let mut modified = Vec::new();
+    let mut modified: Vec<Cursor> = Vec::new();
 
     loop {
         counter = counter.wrapping_add(1);
@@ -219,7 +230,14 @@ pub(crate) fn customise_screen(
                     as usize;
                 if new_dice != cursor.dice {
                     cursor.dice = new_dice;
-                    _net = create_net(&agb.obj, &player_dice.dice[cursor.dice]);
+                    _net = create_net(
+                        &agb.obj,
+                        &player_dice.dice[cursor.dice],
+                        &modified
+                            .iter()
+                            .filter_map(|x| (x.dice == cursor.dice).then_some(x.face))
+                            .collect::<Vec<usize>>(),
+                    );
                 }
 
                 select_box.set_x((cursor.dice as i32 * 32 - 32 / 2 + 20) as u16);
@@ -309,7 +327,14 @@ pub(crate) fn customise_screen(
                     upgrades.remove(cursor.upgrade);
                     _upgrade_objects = create_upgrade_objects(&agb.obj, &upgrades);
 
-                    _net = create_net(&agb.obj, &player_dice.dice[cursor.dice]);
+                    _net = create_net(
+                        &agb.obj,
+                        &player_dice.dice[cursor.dice],
+                        &modified
+                            .iter()
+                            .filter_map(|x| (x.dice == cursor.dice).then_some(x.face))
+                            .collect::<Vec<usize>>(),
+                    );
                     _dice = create_dice_display(&agb.obj, &player_dice);
                     state = CustomiseState::Face;
                 }
