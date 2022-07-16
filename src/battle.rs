@@ -34,6 +34,14 @@ impl RolledDie {
     fn can_reroll(&self) -> bool {
         self.face != Face::Malfunction || self.cooldown == 0
     }
+
+    fn cooldown(&self) -> Option<u32> {
+        if self.face == Face::Malfunction && self.cooldown > 0 {
+            Some(self.cooldown)
+        } else {
+            None
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -76,10 +84,10 @@ impl RolledDice {
         })
     }
 
-    fn faces_to_render(&self) -> impl Iterator<Item = Face> + '_ {
+    fn faces_to_render(&self) -> impl Iterator<Item = (Face, Option<u32>)> + '_ {
         self.rolls.iter().map(|rolled_die| match rolled_die {
-            DieState::Rolling(_, face) => *face,
-            DieState::Rolled(RolledDie { face, .. }) => *face,
+            DieState::Rolling(_, face) => (*face, None),
+            DieState::Rolled(rolled_die) => (rolled_die.face, rolled_die.cooldown()),
         })
     }
 }
@@ -182,12 +190,22 @@ pub(crate) fn battle_screen(agb: &mut Agb, player_dice: PlayerDice) {
         .rolled_dice
         .faces_to_render()
         .enumerate()
-        .map(|(i, face)| {
+        .map(|(i, (face, _))| {
             let mut die_obj = obj.object(obj.sprite(FACE_SPRITES.sprite_for_face(face)));
 
             die_obj.set_y(120).set_x(i as u16 * 40 + 28).show();
 
             die_obj
+        })
+        .collect();
+
+    let mut dice_cooldowns: Vec<_> = dice_display
+        .iter()
+        .enumerate()
+        .map(|(i, _)| {
+            let mut cooldown_bar = HealthBar::new((i as i32 * 40 + 28, 120 - 8).into(), 24, obj);
+            cooldown_bar.hide();
+            cooldown_bar
         })
         .collect();
 
@@ -256,11 +274,20 @@ pub(crate) fn battle_screen(agb: &mut Agb, player_dice: PlayerDice) {
         }
 
         // update the dice display to display the current values
-        for (die_obj, current_roll) in dice_display
+        for ((die_obj, (current_face, cooldown)), cooldown_healthbar) in dice_display
             .iter_mut()
             .zip(current_battle_state.rolled_dice.faces_to_render())
+            .zip(dice_cooldowns.iter_mut())
         {
-            die_obj.set_sprite(obj.sprite(FACE_SPRITES.sprite_for_face(current_roll)));
+            die_obj.set_sprite(obj.sprite(FACE_SPRITES.sprite_for_face(current_face)));
+
+            if let Some(cooldown) = cooldown {
+                cooldown_healthbar
+                    .set_value((cooldown * 24 / MALFUNCTION_COOLDOWN_FRAMES) as usize, obj);
+                cooldown_healthbar.show();
+            } else {
+                cooldown_healthbar.hide();
+            }
         }
 
         for (i, player_shield) in player_shield_display.iter_mut().enumerate() {

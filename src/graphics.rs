@@ -105,10 +105,22 @@ impl<'a> HealthBar<'a> {
             if (i + 1) * 8 < new_value {
                 sprite.set_sprite(obj.sprite(SMALL_SPRITES.red_bar(0)));
             } else if i * 8 < new_value {
-                sprite.set_sprite(obj.sprite(SMALL_SPRITES.red_bar(new_value - i * 8)));
+                sprite.set_sprite(obj.sprite(SMALL_SPRITES.red_bar(8 - (new_value - i * 8))));
             } else {
                 sprite.set_sprite(obj.sprite(SMALL_SPRITES.red_bar(8)));
             }
+        }
+    }
+
+    pub fn show(&mut self) {
+        for obj in self.sprites.iter_mut() {
+            obj.show();
+        }
+    }
+
+    pub fn hide(&mut self) {
+        for obj in self.sprites.iter_mut() {
+            obj.hide();
         }
     }
 }
