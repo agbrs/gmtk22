@@ -28,6 +28,7 @@ enum CustomiseState {
     Upgrade,
 }
 
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 struct Cursor {
     dice: usize,
     face: usize,
@@ -194,6 +195,8 @@ pub(crate) fn customise_screen(
         upgrade: 0,
     };
 
+    let mut modified = Vec::new();
+
     loop {
         counter = counter.wrapping_add(1);
         input.update();
@@ -240,7 +243,14 @@ pub(crate) fn customise_screen(
 
                 if input.is_just_pressed(Button::B) {
                     state = CustomiseState::Dice;
-                } else if input.is_just_pressed(Button::A) && !upgrades.is_empty() {
+                } else if input.is_just_pressed(Button::A)
+                    && !upgrades.is_empty()
+                    && !modified.contains(&Cursor {
+                        dice: cursor.dice,
+                        face: cursor.face,
+                        upgrade: 0,
+                    })
+                {
                     selected_face.set_x((x - 32 / 2) as u16);
                     selected_face.set_y((y - 32 / 2) as u16);
                     selected_face.show();
@@ -288,6 +298,12 @@ pub(crate) fn customise_screen(
                     && player_dice.dice[cursor.dice].faces[cursor.face] != upgrades[cursor.upgrade]
                 {
                     descriptions_map.hide();
+
+                    modified.push(Cursor {
+                        dice: cursor.dice,
+                        face: cursor.face,
+                        upgrade: 0,
+                    });
 
                     player_dice.dice[cursor.dice].faces[cursor.face] = upgrades[cursor.upgrade];
                     upgrades.remove(cursor.upgrade);
