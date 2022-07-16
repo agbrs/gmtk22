@@ -110,7 +110,7 @@ impl CurrentBattleState {
 
         // shield
         let shield = face_counts.entry(Face::Shield).or_default();
-        if self.player.shield_count <= *shield {
+        if self.player.shield_count < *shield {
             self.player.shield_count += 1;
         }
 
