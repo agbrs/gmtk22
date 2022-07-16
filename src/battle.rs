@@ -368,7 +368,7 @@ pub(crate) fn battle_screen(agb: &mut Agb, player_dice: PlayerDice, current_leve
 
     let num_dice = player_dice.dice.len();
 
-    let enemy_health = 10 + current_level * agb::rng::gen().rem_euclid(4) as u32;
+    let enemy_health = 5 + current_level * agb::rng::gen().rem_euclid(4) as u32;
 
     let mut current_battle_state = CurrentBattleState {
         player: PlayerState {
