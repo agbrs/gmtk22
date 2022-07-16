@@ -202,6 +202,21 @@ impl<'a> BattleScreenDisplay<'a> {
         obj: &'a ObjectController,
         current_battle_state: &CurrentBattleState,
     ) -> bool {
+        if self.current_animation.is_none() {
+            self.current_animation = self
+                .animations_to_play
+                .pop_front()
+                .map(|anim| AnimationState::for_animation(anim, obj));
+        }
+
+        if let Some(ref mut animation) = self.current_animation {
+            if animation.update(&mut self.objs, obj) {
+                self.current_animation = None;
+            }
+
+            return false;
+        }
+
         // update the dice display to display the current values
         for ((die_obj, (current_face, cooldown)), cooldown_healthbar) in self
             .objs
@@ -265,18 +280,7 @@ impl<'a> BattleScreenDisplay<'a> {
             self.objs.enemy_attack_display[i].update(attack, obj);
         }
 
-        if let Some(ref mut animation) = self.current_animation {
-            if animation.update(&mut self.objs, obj) {
-                self.current_animation = None;
-            }
-        } else {
-            self.current_animation = self
-                .animations_to_play
-                .pop_front()
-                .map(|anim| AnimationState::for_animation(anim, obj));
-        }
-
-        self.current_animation.is_none()
+        true
     }
 
     pub fn add_animation(&mut self, anim: DisplayAnimation) {
@@ -351,6 +355,10 @@ impl<'a> AnimationState<'a> {
                 x_position: 88,
                 bullet: obj.object(obj.sprite(BULLET_SPRITE)),
             },
+            DisplayAnimation::EnemyShootPlayer => Self::EnemyShootPlayer {
+                bullet: obj.object(obj.sprite(BULLET_SPRITE)),
+                x_position: 180,
+            },
             _ => Self::PlayerNewShield { shield_frame: 0 },
         }
     }
@@ -366,6 +374,16 @@ impl<'a> AnimationState<'a> {
                 *x_position += 2;
 
                 *x_position > 180
+            }
+            Self::EnemyShootPlayer { bullet, x_position } => {
+                bullet
+                    .set_x(*x_position as u16)
+                    .set_y(30)
+                    .show()
+                    .set_hflip(true);
+                *x_position -= 2;
+
+                *x_position < 88
             }
             _ => true,
         }
