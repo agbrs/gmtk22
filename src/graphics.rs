@@ -47,7 +47,7 @@ impl ShipSprites {
     const fn load_ship_sprites() -> Self {
         const S_PLAYER: &Sprite = SPRITES.tags().get("player").sprite(0);
         const S_DRONE: &Sprite = SPRITES.tags().get("drone").sprite(0);
-        const S_SHIELD: &Sprite = SPRITES.tags().get("shield").sprite(0);
+        const S_SHIELD: &Sprite = SPRITES.tags().get("ship shield").sprite(0);
 
         Self {
             sprites: [S_PLAYER, S_DRONE, S_SHIELD],
