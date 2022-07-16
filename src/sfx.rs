@@ -18,8 +18,8 @@ const MULTI_ROLLS: &[&[u8]] = &[
     include_wav!("sfx/MultiRoll_5.wav"),
 ];
 
-const BATTLE_BGM: &[u8] = include_wav!("sfx/BGM_Fight.wav");
-const MENU_BGM: &[u8] = include_wav!("sfx/BGM_Menu.wav");
+const MENU_BGM: &[u8] = include_wav!("sfx/BGM_Fight.wav");
+const BATTLE_BGM: &[u8] = include_wav!("sfx/BGM_Menu.wav");
 
 const MAX_CROSSFADE_FRAMES: i16 = 128;
 
