@@ -63,6 +63,7 @@ pub enum Action {
     PlayerActivateShield { amount: u32 },
     PlayerShoot { damage: u32, piercing: u32 },
     PlayerDisrupt { amount: u32 },
+    PlayerHeal { amount: u32 },
     EnemyShoot { damage: u32 },
     EnemyShield { amount: u32 },
     EnemyHeal { amount: u32 },
@@ -160,6 +161,13 @@ impl RolledDice {
         if disrupt_power > 0 {
             actions.push(Action::PlayerDisrupt {
                 amount: disrupt_power,
+            });
+        }
+
+        let heal = *face_counts.entry(Face::Heal).or_default();
+        if heal != 0 {
+            actions.push(Action::PlayerHeal {
+                amount: ((heal * (heal + 1)) / 2) as u32,
             });
         }
 
@@ -350,6 +358,10 @@ impl CurrentBattleState {
                     attack.max_cooldown = attack.cooldown.max(attack.max_cooldown);
                 }
 
+                None
+            }
+            Action::PlayerHeal { amount } => {
+                self.player.health = self.player.max_health.min(self.player.health + amount);
                 None
             }
             Action::EnemyShoot { damage } => {
