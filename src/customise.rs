@@ -172,7 +172,7 @@ fn generate_upgrades(level: u32) -> Vec<Face> {
             + upgrade_values.get(&potential_upgrade).unwrap()
     };
 
-    let max_upgrade_value = 10 + (rng::gen().rem_euclid(level as i32 * 5));
+    let max_upgrade_value = 15 + (rng::gen().rem_euclid(level as i32 * 5));
     let mut attempts = 0;
 
     while upgrades.len() != 3 {
