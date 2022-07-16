@@ -203,7 +203,7 @@ impl CurrentBattleState {
         }
 
         // shooting
-        let shoot = *face_counts.entry(Face::Attack).or_default();
+        let shoot = *face_counts.entry(Face::Shoot).or_default();
         let shoot_power = shoot * shoot;
 
         if shoot_power > self.enemy.shield_count {

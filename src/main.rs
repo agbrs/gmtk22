@@ -32,9 +32,15 @@ use sfx::Sfx;
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Hash)]
 pub enum Face {
-    Attack,
+    Shoot,
     Shield,
     Malfunction,
+    Heal,
+    Bypass,
+    DoubleShot,
+    TripleShot,
+    Blank,
+    Disrupt,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Hash)]
@@ -105,9 +111,9 @@ fn main(mut gba: agb::Gba) -> ! {
 
     let basic_die = Die {
         faces: [
-            Face::Attack,
-            Face::Attack,
-            Face::Attack,
+            Face::Shoot,
+            Face::Shoot,
+            Face::Shoot,
             Face::Malfunction,
             Face::Shield,
             Face::Shield,

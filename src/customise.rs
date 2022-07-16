@@ -148,7 +148,7 @@ fn create_upgrade_objects<'a>(gfx: &'a ObjectController, upgrades: &[Face]) -> V
 }
 
 fn generate_upgrades(difficulty: u32) -> Vec<Face> {
-    vec![Face::Attack, Face::Shield, Face::Malfunction]
+    vec![Face::Shoot, Face::Shield, Face::Malfunction]
 }
 
 pub(crate) fn customise_screen(
