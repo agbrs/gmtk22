@@ -197,7 +197,11 @@ impl CurrentBattleState {
     fn accept_rolls(&mut self) {
         let mut face_counts: HashMap<Face, u32> = HashMap::new();
         for face in self.rolled_dice.faces_for_accepting() {
-            *face_counts.entry(face).or_default() += 1;
+            match face {
+                Face::DoubleShot => *face_counts.entry(Face::Shoot).or_default() += 2,
+                Face::TripleShot => *face_counts.entry(Face::Shoot).or_default() += 3,
+                other => *face_counts.entry(other).or_default() += 1,
+            }
         }
 
         // shield
@@ -215,6 +219,41 @@ impl CurrentBattleState {
                 self.enemy.shield_count -= 1;
             } else {
                 self.enemy.health = self.enemy.health.saturating_sub(shoot_power);
+            }
+        }
+
+        let mut malfunction_all = false;
+
+        for roll in self
+            .rolled_dice
+            .rolls
+            .iter_mut()
+            .filter_map(|face| match face {
+                DieState::Rolled(rolled_die) => Some(rolled_die),
+                _ => None,
+            })
+        {
+            if roll.face == Face::DoubleShot {
+                roll.cooldown = MALFUNCTION_COOLDOWN_FRAMES;
+                roll.face = Face::Malfunction;
+            }
+            if roll.face == Face::TripleShot {
+                malfunction_all = true;
+            }
+        }
+
+        if malfunction_all {
+            for roll in self
+                .rolled_dice
+                .rolls
+                .iter_mut()
+                .filter_map(|face| match face {
+                    DieState::Rolled(rolled_die) => Some(rolled_die),
+                    _ => None,
+                })
+            {
+                roll.cooldown = MALFUNCTION_COOLDOWN_FRAMES;
+                roll.face = Face::Malfunction;
             }
         }
 
