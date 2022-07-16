@@ -8,6 +8,7 @@ use agb::{
     hash_map::HashMap,
     include_gfx,
     input::{Button, Tri},
+    rng,
 };
 use alloc::vec;
 use alloc::vec::Vec;
@@ -159,7 +160,31 @@ fn generate_upgrades(level: u32) -> Vec<Face> {
     upgrade_values.insert(Face::Bypass, 7);
     upgrade_values.insert(Face::Disrupt, 10);
 
-    vec![Face::DoubleShot, Face::TripleShot, Face::Bypass]
+    let potential_upgrades: Vec<Face> = upgrade_values.keys().cloned().collect();
+
+    let mut upgrades = Vec::new();
+
+    let upgrade_value = |upgrades: &[Face], potential_upgrade: Face| -> i32 {
+        upgrades
+            .iter()
+            .map(|x| upgrade_values.get(x).unwrap())
+            .sum::<i32>()
+            + upgrade_values.get(&potential_upgrade).unwrap()
+    };
+
+    let _ = rng::gen();
+    // let _ = rng::gen();
+
+    let max_upgrade_value = 10 + level as i32 * 3 + (rng::gen() % 10);
+
+    while upgrades.len() != 3 {
+        let next = potential_upgrades[rng::gen() as usize % potential_upgrades.len()];
+        if upgrade_value(&upgrades, next) < max_upgrade_value {
+            upgrades.push(next);
+        }
+    }
+
+    upgrades
 }
 
 pub(crate) fn customise_screen(
