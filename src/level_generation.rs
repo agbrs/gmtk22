@@ -25,7 +25,9 @@ fn generate_enemy_attack(current_level: u32) -> EnemyAttack {
     if attack_id < 4 {
         EnemyAttack::Shoot(rng::gen().rem_euclid(((current_level + 2) / 3) as i32) as u32 + 1)
     } else if attack_id < 9 {
-        EnemyAttack::Shield(rng::gen().rem_euclid(((current_level + 4) / 5) as i32) as u32 + 1)
+        EnemyAttack::Shield(
+            (rng::gen().rem_euclid(((current_level + 4) / 5) as i32) as u32 + 1).min(5),
+        )
     } else {
         EnemyAttack::Heal(rng::gen().rem_euclid(((current_level + 1) / 2) as i32) as u32)
     }

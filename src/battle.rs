@@ -122,7 +122,9 @@ impl RolledDice {
 
         // shield
         if let Some(shield) = face_counts.get(&Face::Shield) {
-            actions.push(Action::PlayerActivateShield { amount: *shield });
+            actions.push(Action::PlayerActivateShield {
+                amount: (*shield).min(5),
+            });
         }
 
         // shooting
