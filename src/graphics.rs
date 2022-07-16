@@ -112,3 +112,62 @@ impl<'a> HealthBar<'a> {
         }
     }
 }
+
+pub struct NumberDisplay<'a> {
+    sprites: Vec<Object<'a>>,
+    digits: usize,
+
+    current_current: usize,
+    current_max: usize,
+}
+
+impl<'a> NumberDisplay<'a> {
+    pub fn new(pos: Vector2D<i32>, digits: usize, obj: &'a ObjectController) -> Self {
+        let mut sprites = Vec::with_capacity(digits * 2 + 1);
+
+        for i in 0..digits {
+            let mut left_digit = obj.object(obj.sprite(SMALL_SPRITES.number(0)));
+            left_digit.set_position(pos + (i as i32 * 4, 0).into());
+
+            sprites.push(left_digit);
+
+            let mut right_digit = obj.object(obj.sprite(SMALL_SPRITES.number(0)));
+            right_digit.set_position(pos + (i as i32 * 4 + digits as i32 * 4 + 7, 0).into());
+
+            sprites.push(right_digit);
+        }
+
+        let mut slash = obj.object(obj.sprite(SMALL_SPRITES.slash()));
+        slash.set_position(pos + (digits as i32 * 4 + 1, 0).into());
+        sprites.push(slash);
+
+        Self {
+            sprites,
+            digits,
+            current_current: 0,
+            current_max: 0,
+        }
+    }
+
+    pub fn set_value(&mut self, current: usize, max: usize, obj: &'a ObjectController) {
+        if self.current_current == current && self.current_max == max {
+            return;
+        }
+
+        let mut current = current;
+        let mut max = max;
+
+        for i in 0..self.digits {
+            let current_value_digit = current % 10;
+            current /= 10;
+            let current_value_sprite = &mut self.sprites[(self.digits - i) * 2 - 2];
+            current_value_sprite
+                .set_sprite(obj.sprite(SMALL_SPRITES.number(current_value_digit as u32)));
+
+            let max_value_digit = max % 10;
+            max /= 10;
+            let max_value_sprite = &mut self.sprites[(self.digits - i) * 2 - 1];
+            max_value_sprite.set_sprite(obj.sprite(SMALL_SPRITES.number(max_value_digit as u32)));
+        }
+    }
+}

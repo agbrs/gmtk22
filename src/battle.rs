@@ -1,5 +1,5 @@
 use crate::{
-    graphics::{HealthBar, FACE_SPRITES, SELECT_BOX, SHIP_SPRITES},
+    graphics::{HealthBar, NumberDisplay, FACE_SPRITES, SELECT_BOX, SHIP_SPRITES},
     Agb, Face, PlayerDice, Ship,
 };
 use agb::{hash_map::HashMap, input::Button};
@@ -218,6 +218,9 @@ pub(crate) fn battle_screen(agb: &mut Agb, player_dice: PlayerDice) {
     let mut player_healthbar = HealthBar::new((32, 8).into(), HEALTH_BAR_WIDTH, obj);
     let mut enemy_healthbar = HealthBar::new((160, 8).into(), HEALTH_BAR_WIDTH, obj);
 
+    let mut player_health_display = NumberDisplay::new((32, 16).into(), 3, obj);
+    let mut enemy_health_display = NumberDisplay::new((160, 16).into(), 3, obj);
+
     let mut selected_die = 0usize;
     let mut input = agb::input::ButtonController::new();
     let mut counter = 0usize;
@@ -285,6 +288,17 @@ pub(crate) fn battle_screen(agb: &mut Agb, player_dice: PlayerDice) {
         enemy_healthbar.set_value(
             ((current_battle_state.enemy.health * HEALTH_BAR_WIDTH as u32)
                 / current_battle_state.enemy.max_health) as usize,
+            obj,
+        );
+
+        player_health_display.set_value(
+            current_battle_state.player.health as usize,
+            current_battle_state.player.max_health as usize,
+            obj,
+        );
+        enemy_health_display.set_value(
+            current_battle_state.enemy.health as usize,
+            current_battle_state.enemy.max_health as usize,
             obj,
         );
 
