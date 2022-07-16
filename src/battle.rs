@@ -108,6 +108,30 @@ enum EnemyAttack {
     Heal(u32),
 }
 
+impl EnemyAttack {
+    fn apply_effect(&self, player_state: &mut PlayerState, enemy_state: &mut EnemyState) {
+        match self {
+            EnemyAttack::Shoot(damage) => {
+                if *damage > player_state.shield_count {
+                    if player_state.shield_count > 0 {
+                        player_state.shield_count -= 1;
+                    } else {
+                        player_state.health = player_state.health.saturating_sub(*damage);
+                    }
+                }
+            }
+            EnemyAttack::Shield => {
+                if enemy_state.shield_count < 5 {
+                    enemy_state.shield_count += 1;
+                }
+            }
+            EnemyAttack::Heal(amount) => {
+                enemy_state.health = enemy_state.max_health.min(enemy_state.health + amount);
+            }
+        }
+    }
+}
+
 #[derive(Debug)]
 struct EnemyAttackState {
     attack: EnemyAttack,
@@ -123,6 +147,18 @@ impl EnemyAttackState {
             EnemyAttack::Heal(_) => EnemyAttackType::Heal,
         }
     }
+
+    #[must_use]
+    fn update(&mut self, player_state: &mut PlayerState, enemy_state: &mut EnemyState) -> bool {
+        if self.cooldown == 0 {
+            self.attack.apply_effect(player_state, enemy_state);
+            return true;
+        }
+
+        self.cooldown -= 1;
+
+        false
+    }
 }
 
 #[derive(Debug)]
@@ -130,7 +166,6 @@ struct EnemyState {
     shield_count: u32,
     health: u32,
     max_health: u32,
-    attacks: [Option<EnemyAttackState>; 2],
 }
 
 #[derive(Debug)]
@@ -139,6 +174,7 @@ struct CurrentBattleState {
     enemy: EnemyState,
     rolled_dice: RolledDice,
     player_dice: PlayerDice,
+    attacks: [Option<EnemyAttackState>; 2],
 }
 
 impl CurrentBattleState {
@@ -180,6 +216,22 @@ impl CurrentBattleState {
             }
         }
     }
+
+    fn update(&mut self) {
+        self.rolled_dice.update(&self.player_dice);
+
+        for attack in self.attacks.iter_mut() {
+            let keep = if let Some(attack_state) = attack {
+                attack_state.update(&mut self.player, &mut self.enemy)
+            } else {
+                false
+            };
+
+            if !keep {
+                attack.take();
+            }
+        }
+    }
 }
 
 const HEALTH_BAR_WIDTH: usize = 48;
@@ -217,7 +269,6 @@ pub(crate) fn battle_screen(agb: &mut Agb, player_dice: PlayerDice) {
             shield_count: 5,
             health: 38,
             max_health: 50,
-            attacks: [None, None],
         },
         rolled_dice: RolledDice {
             rolls: player_dice
@@ -227,6 +278,7 @@ pub(crate) fn battle_screen(agb: &mut Agb, player_dice: PlayerDice) {
                 .collect(),
         },
         player_dice: player_dice.clone(),
+        attacks: [None, None],
     };
 
     let mut dice_display: Vec<_> = current_battle_state
@@ -334,7 +386,7 @@ pub(crate) fn battle_screen(agb: &mut Agb, player_dice: PlayerDice) {
 
     loop {
         counter = counter.wrapping_add(1);
-        current_battle_state.rolled_dice.update(&player_dice);
+        current_battle_state.update();
 
         input.update();
 
@@ -418,7 +470,7 @@ pub(crate) fn battle_screen(agb: &mut Agb, player_dice: PlayerDice) {
             obj,
         );
 
-        for (i, attack) in current_battle_state.enemy.attacks.iter().enumerate() {
+        for (i, attack) in current_battle_state.attacks.iter().enumerate() {
             let attack_display = &mut enemy_attack_display[i];
 
             if let Some(attack) = attack {
