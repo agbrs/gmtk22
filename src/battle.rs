@@ -387,11 +387,10 @@ pub(crate) fn battle_screen(agb: &mut Agb, player_dice: PlayerDice, current_leve
             let attack_obj_position = (120, 56 + 32 * i).into();
             attack_obj.set_position(attack_obj_position).hide();
 
-            let mut attack_cooldown =
-                HealthBar::new(attack_obj_position + (32, -8).into(), 48, obj);
+            let mut attack_cooldown = HealthBar::new(attack_obj_position + (32, 8).into(), 48, obj);
             attack_cooldown.hide();
 
-            let attack_number_display = NumberDisplay::new(attack_obj_position - (8, 11).into());
+            let attack_number_display = NumberDisplay::new(attack_obj_position - (8, -10).into());
 
             (attack_obj, attack_cooldown, attack_number_display)
         })
