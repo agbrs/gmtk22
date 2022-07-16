@@ -1,6 +1,7 @@
 use crate::{
     graphics::{
-        FractionDisplay, HealthBar, ENEMY_ATTACK_SPRITES, FACE_SPRITES, SELECT_BOX, SHIP_SPRITES,
+        FractionDisplay, HealthBar, NumberDisplay, ENEMY_ATTACK_SPRITES, FACE_SPRITES, SELECT_BOX,
+        SHIP_SPRITES,
     },
     level_generation::generate_attack,
     Agb, EnemyAttackType, Face, PlayerDice, Ship,
@@ -146,6 +147,14 @@ impl EnemyAttackState {
             EnemyAttack::Shoot(_) => EnemyAttackType::Attack,
             EnemyAttack::Shield => EnemyAttackType::Shield,
             EnemyAttack::Heal(_) => EnemyAttackType::Heal,
+        }
+    }
+
+    fn value_to_show(&self) -> Option<u32> {
+        match self.attack {
+            EnemyAttack::Shoot(i) => Some(i),
+            EnemyAttack::Heal(i) => Some(i),
+            EnemyAttack::Shield => None,
         }
     }
 
@@ -378,10 +387,13 @@ pub(crate) fn battle_screen(agb: &mut Agb, player_dice: PlayerDice, current_leve
             let attack_obj_position = (120, 56 + 32 * i).into();
             attack_obj.set_position(attack_obj_position).hide();
 
-            let mut attack_cooldown = HealthBar::new(attack_obj_position + (32, 8).into(), 48, obj);
+            let mut attack_cooldown =
+                HealthBar::new(attack_obj_position + (32, -8).into(), 48, obj);
             attack_cooldown.hide();
 
-            (attack_obj, attack_cooldown)
+            let attack_number_display = NumberDisplay::new(attack_obj_position - (8, 11).into());
+
+            (attack_obj, attack_cooldown, attack_number_display)
         })
         .collect();
 
@@ -486,9 +498,12 @@ pub(crate) fn battle_screen(agb: &mut Agb, player_dice: PlayerDice, current_leve
                     .1
                     .set_value((attack.cooldown * 48 / attack.max_cooldown) as usize, obj);
                 attack_display.1.show();
+
+                attack_display.2.set_value(attack.value_to_show(), obj);
             } else {
                 attack_display.0.hide();
                 attack_display.1.hide();
+                attack_display.2.set_value(None, obj);
             }
         }
 

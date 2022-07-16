@@ -204,3 +204,54 @@ impl<'a> FractionDisplay<'a> {
         }
     }
 }
+
+pub struct NumberDisplay<'a> {
+    objects: Vec<Object<'a>>,
+    value: Option<u32>,
+    position: Vector2D<i32>,
+}
+
+impl<'a> NumberDisplay<'a> {
+    pub fn new(position: Vector2D<i32>) -> Self {
+        Self {
+            objects: Vec::new(),
+            value: None,
+            position,
+        }
+    }
+
+    pub fn set_value(&mut self, new_value: Option<u32>, obj: &'a ObjectController) {
+        if self.value == new_value {
+            return;
+        }
+
+        self.objects.clear();
+
+        if let Some(mut new_value) = new_value {
+            if new_value == 0 {
+                let mut zero_object = obj.object(obj.sprite(SMALL_SPRITES.number(0)));
+                zero_object.show().set_position(self.position);
+
+                self.objects.push(zero_object);
+                return;
+            }
+
+            let mut digit = 0;
+            while new_value != 0 {
+                let current_value_digit = new_value % 10;
+                new_value /= 10;
+
+                let mut current_value_obj =
+                    obj.object(obj.sprite(SMALL_SPRITES.number(current_value_digit)));
+
+                current_value_obj
+                    .show()
+                    .set_position(self.position - (digit * 4, 0).into());
+
+                digit += 1;
+
+                self.objects.push(current_value_obj);
+            }
+        }
+    }
+}
