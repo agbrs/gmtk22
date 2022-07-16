@@ -112,11 +112,11 @@ fn main(mut gba: agb::Gba) -> ! {
     let basic_die = Die {
         faces: [
             Face::Shoot,
-            Face::Shoot,
-            Face::Shoot,
+            Face::Shield,
+            Face::Blank,
             Face::Malfunction,
-            Face::Shield,
-            Face::Shield,
+            Face::Blank,
+            Face::Blank,
         ],
     };
 

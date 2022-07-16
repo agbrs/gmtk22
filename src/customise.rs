@@ -148,7 +148,7 @@ fn create_upgrade_objects<'a>(gfx: &'a ObjectController, upgrades: &[Face]) -> V
 }
 
 fn generate_upgrades(difficulty: u32) -> Vec<Face> {
-    vec![Face::Shoot, Face::Shield, Face::Malfunction]
+    vec![Face::DoubleShot, Face::TripleShot, Face::Bypass]
 }
 
 pub(crate) fn customise_screen(
@@ -255,25 +255,28 @@ pub(crate) fn customise_screen(
                 cursor.upgrade = (cursor.upgrade as isize + ud as isize)
                     .rem_euclid(upgrades.len() as isize) as usize;
 
-                if cursor.upgrade != old_updade {
-                    for y in 0..11 {
-                        for x in 0..8 {
-                            descriptions_map.set_tile(
-                                &mut agb.vram,
-                                (x, y).into(),
-                                &descriptions_tileset,
-                                TileSetting::new(
-                                    y * 8 + x + 8 * 11 * upgrades[cursor.upgrade] as u16,
-                                    false,
-                                    false,
-                                    1,
-                                ),
-                            )
+                if (upgrades[cursor.upgrade] as u32) < 3 {
+                    if cursor.upgrade != old_updade {
+                        for y in 0..11 {
+                            for x in 0..8 {
+                                descriptions_map.set_tile(
+                                    &mut agb.vram,
+                                    (x, y).into(),
+                                    &descriptions_tileset,
+                                    TileSetting::new(
+                                        y * 8 + x + 8 * 11 * upgrades[cursor.upgrade] as u16,
+                                        false,
+                                        false,
+                                        1,
+                                    ),
+                                )
+                            }
                         }
                     }
+                    descriptions_map.show();
+                } else {
+                    descriptions_map.hide();
                 }
-
-                descriptions_map.show();
 
                 let (x, y) = upgrade_position(cursor.upgrade);
                 select_box.set_x((x - 32 / 2) as u16);
