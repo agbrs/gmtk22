@@ -5,7 +5,7 @@ use agb::{hash_map::HashMap, input::Button};
 use alloc::vec;
 use alloc::vec::Vec;
 
-use self::display::{Action, Actions, BattleScreenDisplay};
+use self::display::{Actions, BattleScreenDisplay};
 
 mod display;
 
@@ -106,12 +106,7 @@ impl RolledDice {
         })
     }
 
-    fn accept_rolls(
-        &mut self,
-        player_state: &PlayerState,
-        enemy_state: &EnemyState,
-        player_dice: &PlayerDice,
-    ) -> Vec<Action> {
+    fn accept_rolls(&mut self, player_dice: &PlayerDice) -> Vec<Action> {
         let mut actions = vec![];
 
         let mut face_counts: HashMap<Face, u32> = HashMap::new();
@@ -314,8 +309,7 @@ pub struct CurrentBattleState {
 
 impl CurrentBattleState {
     fn accept_rolls(&mut self) -> Vec<Action> {
-        self.rolled_dice
-            .accept_rolls(&self.player, &self.enemy, &self.player_dice)
+        self.rolled_dice.accept_rolls(&self.player_dice)
     }
 
     fn roll_die(&mut self, die_index: usize, time: u32, is_after_accept: bool) {
