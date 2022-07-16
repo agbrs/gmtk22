@@ -110,6 +110,11 @@ impl CurrentBattleState {
         if self.player.shield_count <= *shield {
             self.player.shield_count += 1;
         }
+
+        // reroll everything after accepting
+        for i in 0..self.player_dice.dice.len() {
+            self.roll_die(i);
+        }
     }
 
     fn roll_die(&mut self, die_index: usize) {
