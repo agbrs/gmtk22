@@ -312,7 +312,8 @@ pub(crate) fn battle_screen(agb: &mut Agb, player_dice: PlayerDice) {
             let attack_obj_position = (120, 56 + 32 * i).into();
             attack_obj.set_position(attack_obj_position).hide();
 
-            let attack_cooldown = HealthBar::new(attack_obj_position + (32, 8).into(), 48, obj);
+            let mut attack_cooldown = HealthBar::new(attack_obj_position + (32, 8).into(), 48, obj);
+            attack_cooldown.hide();
 
             (attack_obj_position, attack_cooldown)
         })
