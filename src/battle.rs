@@ -133,6 +133,17 @@ impl RolledDice {
         let malfunction_shoot = *face_counts.entry(Face::MalfunctionShot).or_default()
             * *face_counts.entry(Face::Malfunction).or_default();
 
+        if malfunction_shoot != 0 {
+            for roll in self.rolls.iter_mut().filter_map(|face| match face {
+                DieState::Rolled(rolled_die) if rolled_die.face == Face::Malfunction => {
+                    Some(rolled_die)
+                }
+                _ => None,
+            }) {
+                roll.face = Face::Blank;
+            }
+        }
+
         let shoot_power = shoot_power + malfunction_shoot;
 
         if shoot_power > 0 {
