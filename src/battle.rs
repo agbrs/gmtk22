@@ -169,7 +169,7 @@ pub(crate) fn battle_screen(agb: &mut Agb, player_dice: PlayerDice) {
     let mut enemy_obj = obj.object(obj.sprite(enemy_sprite));
 
     let player_x = 12;
-    let player_y = 16;
+    let player_y = 8;
     let enemy_x = 167;
 
     player_obj.set_x(player_x).set_y(player_y).set_z(1).show();
@@ -251,8 +251,8 @@ pub(crate) fn battle_screen(agb: &mut Agb, player_dice: PlayerDice) {
         })
         .collect();
 
-    let mut player_healthbar = HealthBar::new((32, 8).into(), HEALTH_BAR_WIDTH, obj);
-    let mut enemy_healthbar = HealthBar::new((160, 8).into(), HEALTH_BAR_WIDTH, obj);
+    let mut player_healthbar = HealthBar::new((32, player_y - 8).into(), HEALTH_BAR_WIDTH, obj);
+    let mut enemy_healthbar = HealthBar::new((160, player_y - 8).into(), HEALTH_BAR_WIDTH, obj);
 
     let mut player_health_display = NumberDisplay::new((32, player_y).into(), 3, obj);
     let mut enemy_health_display = NumberDisplay::new((160, player_y).into(), 3, obj);
