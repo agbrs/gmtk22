@@ -169,10 +169,11 @@ pub(crate) fn battle_screen(agb: &mut Agb, player_dice: PlayerDice) {
     let mut enemy_obj = obj.object(obj.sprite(enemy_sprite));
 
     let player_x = 12;
+    let player_y = 16;
     let enemy_x = 167;
 
-    player_obj.set_x(player_x).set_y(16).set_z(1).show();
-    enemy_obj.set_x(enemy_x).set_y(16).set_z(1).show();
+    player_obj.set_x(player_x).set_y(player_y).set_z(1).show();
+    enemy_obj.set_x(enemy_x).set_y(player_y).set_z(1).show();
 
     let mut select_box_obj = agb.obj.object(agb.obj.sprite(SELECT_BOX.sprite(0)));
     select_box_obj.show();
@@ -227,7 +228,10 @@ pub(crate) fn battle_screen(agb: &mut Agb, player_dice: PlayerDice) {
         .into_iter()
         .map(|i| {
             let mut shield_obj = obj.object(obj.sprite(shield_sprite));
-            shield_obj.set_x(player_x + 18 + 11 * i).set_y(16).hide();
+            shield_obj
+                .set_x(player_x + 18 + 11 * i)
+                .set_y(player_y)
+                .hide();
 
             shield_obj
         })
@@ -239,7 +243,7 @@ pub(crate) fn battle_screen(agb: &mut Agb, player_dice: PlayerDice) {
             let mut shield_obj = obj.object(obj.sprite(shield_sprite));
             shield_obj
                 .set_x(enemy_x - 16 - 11 * i)
-                .set_y(16)
+                .set_y(player_y)
                 .set_hflip(true)
                 .hide();
 
@@ -250,8 +254,8 @@ pub(crate) fn battle_screen(agb: &mut Agb, player_dice: PlayerDice) {
     let mut player_healthbar = HealthBar::new((32, 8).into(), HEALTH_BAR_WIDTH, obj);
     let mut enemy_healthbar = HealthBar::new((160, 8).into(), HEALTH_BAR_WIDTH, obj);
 
-    let mut player_health_display = NumberDisplay::new((32, 16).into(), 3, obj);
-    let mut enemy_health_display = NumberDisplay::new((160, 16).into(), 3, obj);
+    let mut player_health_display = NumberDisplay::new((32, player_y).into(), 3, obj);
+    let mut enemy_health_display = NumberDisplay::new((160, player_y).into(), 3, obj);
 
     let mut selected_die = 0usize;
     let mut input = agb::input::ButtonController::new();
