@@ -87,6 +87,10 @@ fn main(mut gba: agb::Gba) -> ! {
         Priority::P0,
         display::tiled::RegularBackgroundSize::Background64x32,
     );
+    let mut card_descriptions = tiled.background(
+        Priority::P1,
+        display::tiled::RegularBackgroundSize::Background32x32,
+    );
 
     background::load_palettes(&mut vram);
     background0.show();
@@ -121,7 +125,7 @@ fn main(mut gba: agb::Gba) -> ! {
     let mut current_level = 1;
 
     loop {
-        dice = customise::customise_screen(&mut agb, dice.clone());
+        dice = customise::customise_screen(&mut agb, dice.clone(), &mut card_descriptions);
 
         battle::battle_screen(&mut agb, dice.clone(), current_level);
 

@@ -1,0 +1,6 @@
+version = "1.0"
+
+[image.descriptions]
+filename = "descriptions.png"
+tile_size = "8x8"
+transparent_colour = "121105"

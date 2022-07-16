@@ -1,8 +1,10 @@
 use agb::{
     display::{
         object::{Object, ObjectController},
+        tiled::{RegularMap, TileSet, TileSetting},
         HEIGHT, WIDTH,
     },
+    include_gfx,
     input::{Button, Tri},
 };
 use alloc::vec;
@@ -12,6 +14,8 @@ use crate::{
     graphics::{FACE_SPRITES, SELECT_BOX},
     Agb, Die, Face, PlayerDice,
 };
+
+include_gfx!("gfx/descriptions.toml");
 
 enum CustomiseState {
     Dice {
@@ -95,7 +99,7 @@ fn create_dice_display<'a>(gfx: &'a ObjectController, dice: &'_ PlayerDice) -> V
     let mut objects = Vec::new();
     for (idx, dice) in dice.dice.iter().enumerate() {
         let mut obj = gfx.object(gfx.sprite(FACE_SPRITES.sprite_for_face(dice.faces[1])));
-        obj.set_x((idx * 32 - 24 / 2 + 20) as u16);
+        obj.set_x((idx as i32 * 32 - 24 / 2 + 20) as u16);
         obj.set_y(16 - 24 / 2);
 
         obj.show();
@@ -147,7 +151,31 @@ fn generate_upgrades(difficulty: u32) -> Vec<Face> {
     vec![Face::Attack, Face::Shield, Face::Malfunction]
 }
 
-pub(crate) fn customise_screen(agb: &mut Agb, mut player_dice: PlayerDice) -> PlayerDice {
+pub(crate) fn customise_screen(
+    agb: &mut Agb,
+    mut player_dice: PlayerDice,
+    descriptions_map: &mut RegularMap,
+) -> PlayerDice {
+    descriptions_map.set_scroll_pos((u16::MAX - 174, u16::MAX - 52 as u16).into());
+
+    descriptions_map.show();
+
+    let descriptions_tileset = TileSet::new(
+        descriptions::descriptions.tiles,
+        agb::display::tiled::TileFormat::FourBpp,
+    );
+
+    for y in 0..11 {
+        for x in 0..8 {
+            descriptions_map.set_tile(
+                &mut agb.vram,
+                (x, y).into(),
+                &descriptions_tileset,
+                TileSetting::new(y * 8 + x, false, false, 0),
+            )
+        }
+    }
+
     // create the dice
 
     let mut _net = create_net(&agb.obj, &player_dice.dice[0]);
@@ -190,7 +218,7 @@ pub(crate) fn customise_screen(agb: &mut Agb, mut player_dice: PlayerDice) -> Pl
                     _net = create_net(&agb.obj, &player_dice.dice[*dice]);
                 }
 
-                select_box.set_x((*dice * 32 - 32 / 2 + 20) as u16);
+                select_box.set_x((*dice as i32 * 32 - 32 / 2 + 20) as u16);
                 select_box.set_y(0);
 
                 if input.is_just_pressed(Button::A) {
@@ -253,7 +281,7 @@ pub(crate) fn customise_screen(agb: &mut Agb, mut player_dice: PlayerDice) -> Pl
         }
 
         if input.is_just_pressed(Button::START) {
-            return player_dice;
+            break;
         }
 
         select_box.set_sprite(agb.obj.sprite(SELECT_BOX.animation_sprite(counter / 10)));
@@ -262,6 +290,11 @@ pub(crate) fn customise_screen(agb: &mut Agb, mut player_dice: PlayerDice) -> Pl
         let _ = agb::rng::gen();
         agb.vblank.wait_for_vblank();
         agb.obj.commit();
+        descriptions_map.commit(&mut agb.vram);
         agb.star_background.commit(&mut agb.vram);
     }
+
+    descriptions_map.hide();
+
+    player_dice
 }
