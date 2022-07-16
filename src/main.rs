@@ -24,6 +24,7 @@ mod background;
 mod battle;
 mod customise;
 mod graphics;
+mod level_generation;
 
 use background::StarBackground;
 
@@ -117,7 +118,7 @@ fn main(mut gba: agb::Gba) -> ! {
         dice: vec![basic_die; 5],
     };
 
-    let mut current_level = 0;
+    let mut current_level = 1;
 
     loop {
         dice = customise::customise_screen(&mut agb, dice.clone());

@@ -2,6 +2,7 @@ use crate::{
     graphics::{
         HealthBar, NumberDisplay, ENEMY_ATTACK_SPRITES, FACE_SPRITES, SELECT_BOX, SHIP_SPRITES,
     },
+    level_generation::generate_attack,
     Agb, EnemyAttackType, Face, PlayerDice, Ship,
 };
 use agb::{hash_map::HashMap, input::Button};
@@ -102,7 +103,7 @@ struct PlayerState {
 }
 
 #[derive(Debug)]
-enum EnemyAttack {
+pub enum EnemyAttack {
     Shoot(u32),
     Shield,
     Heal(u32),
@@ -222,15 +223,17 @@ impl CurrentBattleState {
         self.rolled_dice.update(&self.player_dice);
 
         for attack in self.attacks.iter_mut() {
-            let keep = if let Some(attack_state) = attack {
-                attack_state.update(&mut self.player, &mut self.enemy)
-            } else {
-                false
+            if let Some(attack_state) = attack {
+                if attack_state.update(&mut self.player, &mut self.enemy) {
+                    attack.take();
+                }
+            } else if let Some(generated_attack) = generate_attack(self.current_level) {
+                attack.replace(EnemyAttackState {
+                    attack: generated_attack.attack,
+                    cooldown: generated_attack.cooldown,
+                    max_cooldown: generated_attack.cooldown,
+                });
             };
-
-            if !keep {
-                attack.take();
-            }
         }
     }
 }
@@ -263,12 +266,12 @@ pub(crate) fn battle_screen(agb: &mut Agb, player_dice: PlayerDice, current_leve
     let mut current_battle_state = CurrentBattleState {
         player: PlayerState {
             shield_count: 0,
-            health: 58,
+            health: 120,
             max_health: 120,
         },
         enemy: EnemyState {
-            shield_count: 5,
-            health: 38,
+            shield_count: 0,
+            health: 50,
             max_health: 50,
         },
         rolled_dice: RolledDice {
