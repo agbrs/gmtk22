@@ -1,4 +1,7 @@
-use crate::{Agb, Face, PlayerDice, Ship, FACE_SPRITES, SELECT_BOX, SHIP_SPRITES};
+use crate::{
+    graphics::{FACE_SPRITES, SELECT_BOX, SHIP_SPRITES},
+    Agb, Face, PlayerDice, Ship,
+};
 use agb::{hash_map::HashMap, input::Button};
 use alloc::vec::Vec;
 

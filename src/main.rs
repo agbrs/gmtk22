@@ -11,7 +11,7 @@
 #![no_main]
 
 use agb::display;
-use agb::display::object::{ObjectController, Sprite, Tag};
+use agb::display::object::ObjectController;
 use agb::display::tiled::VRamManager;
 use agb::display::Priority;
 use agb::interrupt::VBlank;
@@ -23,72 +23,26 @@ use alloc::vec::Vec;
 mod background;
 mod battle;
 mod customise;
+mod graphics;
 
 use background::StarBackground;
 
-const DICE_FACES: &agb::display::object::Graphics =
-    agb::include_aseprite!("gfx/dice-faces.aseprite");
-const FACE_SPRITES: &FaceSprites = &FaceSprites::load_face_sprites();
-const SELECT_BOX: &Tag = DICE_FACES.tags().get("selection");
-
-const SHIPS: &agb::display::object::Graphics = agb::include_aseprite!("gfx/ships.aseprite");
-const SHIP_SPRITES: &ShipSprites = &ShipSprites::load_ship_sprites();
-
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Hash)]
-enum Face {
+pub enum Face {
     Attack,
     Shield,
     Malfunction,
 }
 
-struct FaceSprites {
-    sprites: [&'static Sprite; 3],
-}
-
-impl FaceSprites {
-    const fn load_face_sprites() -> Self {
-        const S_SHOOT: &Sprite = DICE_FACES.tags().get("shoot").sprite(0);
-        const S_SHIELD: &Sprite = DICE_FACES.tags().get("shield").sprite(0);
-        const S_MALFUNCTION: &Sprite = DICE_FACES.tags().get("malfunction").sprite(0);
-        Self {
-            sprites: [S_SHOOT, S_SHIELD, S_MALFUNCTION],
-        }
-    }
-
-    fn sprite_for_face(&self, face: Face) -> &'static Sprite {
-        self.sprites[face as usize]
-    }
-}
-
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Hash)]
-enum Ship {
+pub enum Ship {
     Player,
     Drone,
     Shield,
 }
 
-struct ShipSprites {
-    sprites: [&'static Sprite; 3],
-}
-
-impl ShipSprites {
-    const fn load_ship_sprites() -> Self {
-        const S_PLAYER: &Sprite = SHIPS.tags().get("player").sprite(0);
-        const S_DRONE: &Sprite = SHIPS.tags().get("drone").sprite(0);
-        const S_SHIELD: &Sprite = SHIPS.tags().get("shield").sprite(0);
-
-        Self {
-            sprites: [S_PLAYER, S_DRONE, S_SHIELD],
-        }
-    }
-
-    fn sprite_for_ship(&self, ship: Ship) -> &'static Sprite {
-        self.sprites[ship as usize]
-    }
-}
-
 #[derive(Debug, Clone)]
-struct Die {
+pub struct Die {
     faces: [Face; 6],
 }
 
@@ -101,7 +55,7 @@ impl Die {
 }
 
 #[derive(Debug, Clone)]
-struct PlayerDice {
+pub struct PlayerDice {
     dice: Vec<Die>,
 }
 

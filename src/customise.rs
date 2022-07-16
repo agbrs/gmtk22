@@ -7,7 +7,10 @@ use agb::{
 };
 use alloc::vec::Vec;
 
-use crate::{Agb, Die, Face, PlayerDice, FACE_SPRITES, SELECT_BOX};
+use crate::{
+    graphics::{FACE_SPRITES, SELECT_BOX},
+    Agb, Die, PlayerDice,
+};
 
 enum CustomiseState {
     DiceSelect(u32),
