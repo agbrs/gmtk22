@@ -211,7 +211,7 @@ impl<'a> BattleScreenDisplay<'a> {
         }
 
         if let Some(ref mut animation) = self.current_animation {
-            if animation.update(&mut self.objs, obj) {
+            if animation.update(&mut self.objs, obj, current_battle_state) {
                 self.current_animation = None;
             }
 
@@ -365,6 +365,7 @@ impl<'a> AnimationState<'a> {
                 x_position: 176,
                 shield_break_frame: 0,
             },
+            DisplayAnimation::EnemyNewShield => Self::EnemyNewShield { shield_frame: 6 },
             _ => Self::PlayerNewShield { shield_frame: 0 },
         }
     }
@@ -373,6 +374,7 @@ impl<'a> AnimationState<'a> {
         &mut self,
         objs: &mut BattleScreenDisplayObjects<'a>,
         obj: &'a ObjectController,
+        current_battle_state: &CurrentBattleState,
     ) -> bool {
         match self {
             Self::PlayerShootEnemy { bullet, x_position } => {
@@ -421,6 +423,14 @@ impl<'a> AnimationState<'a> {
 
                     false
                 }
+            }
+            Self::EnemyNewShield { shield_frame } => {
+                objs.enemy_shield[(current_battle_state.enemy.shield_count - 1) as usize]
+                    .show()
+                    .set_sprite(obj.sprite(SHIELD.sprite(*shield_frame as usize / 2)));
+
+                *shield_frame -= 1;
+                *shield_frame == 0
             }
             _ => true,
         }
