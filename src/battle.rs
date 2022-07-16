@@ -15,7 +15,6 @@ const ROLL_TIME_FRAMES_ONE: u32 = 60 / 8;
 
 /// A face of the rolled die and it's cooldown (should it be a malfunction)
 #[derive(Debug)]
-
 struct RolledDie {
     face: Face,
     cooldown: u32,
