@@ -210,7 +210,7 @@ pub(crate) fn customise_screen(agb: &mut Agb, mut player_dice: PlayerDice) -> Pl
 
                 if input.is_just_pressed(Button::B) {
                     state = CustomiseState::DiceSelect { dice: *dice };
-                } else if input.is_just_pressed(Button::A) {
+                } else if input.is_just_pressed(Button::A) && !upgrades.is_empty() {
                     state = CustomiseState::UpgradeSelect {
                         dice: *dice,
                         face: *face,
@@ -235,7 +235,9 @@ pub(crate) fn customise_screen(agb: &mut Agb, mut player_dice: PlayerDice) -> Pl
                         dice: *dice,
                         face: *face,
                     };
-                } else if input.is_just_pressed(Button::A) {
+                } else if input.is_just_pressed(Button::A)
+                    && player_dice.dice[*dice].faces[*face] != upgrades[*upgrade]
+                {
                     player_dice.dice[*dice].faces[*face] = upgrades[*upgrade];
                     upgrades.remove(*upgrade);
                     _upgrade_objects = create_upgrade_objects(&agb.obj, &upgrades);
