@@ -313,8 +313,6 @@ pub(crate) fn battle_screen(agb: &mut Agb, player_dice: PlayerDice, current_leve
     let player_sprite = SHIP_SPRITES.sprite_for_ship(Ship::Player);
     let enemy_sprite = SHIP_SPRITES.sprite_for_ship(Ship::Drone);
 
-    let shield_sprite = SHIP_SPRITES.sprite_for_ship(Ship::Shield);
-
     let mut player_obj = obj.object(obj.sprite(player_sprite));
     let mut enemy_obj = obj.object(obj.sprite(enemy_sprite));
 
@@ -354,33 +352,6 @@ pub(crate) fn battle_screen(agb: &mut Agb, player_dice: PlayerDice, current_leve
     };
 
     let mut battle_screen_display = BattleScreenDisplay::new(obj, &current_battle_state);
-
-    let mut player_shield_display: Vec<_> = (0..5)
-        .into_iter()
-        .map(|i| {
-            let mut shield_obj = obj.object(obj.sprite(shield_sprite));
-            shield_obj
-                .set_x(player_x + 18 + 11 * i)
-                .set_y(player_y)
-                .hide();
-
-            shield_obj
-        })
-        .collect();
-
-    let mut enemy_shield_display: Vec<_> = (0..5)
-        .into_iter()
-        .map(|i| {
-            let mut shield_obj = obj.object(obj.sprite(shield_sprite));
-            shield_obj
-                .set_x(enemy_x - 16 - 11 * i)
-                .set_y(player_y)
-                .set_hflip(true)
-                .hide();
-
-            shield_obj
-        })
-        .collect();
 
     let player_healthbar_x = 18;
     let enemy_healthbar_x = 180;
@@ -476,22 +447,6 @@ pub(crate) fn battle_screen(agb: &mut Agb, player_dice: PlayerDice, current_leve
         }
 
         battle_screen_display.update(obj, &current_battle_state);
-
-        for (i, player_shield) in player_shield_display.iter_mut().enumerate() {
-            if i < current_battle_state.player.shield_count as usize {
-                player_shield.show();
-            } else {
-                player_shield.hide();
-            }
-        }
-
-        for (i, player_shield) in enemy_shield_display.iter_mut().enumerate() {
-            if i < current_battle_state.enemy.shield_count as usize {
-                player_shield.show();
-            } else {
-                player_shield.hide();
-            }
-        }
 
         player_healthbar.set_value(
             ((current_battle_state.player.health * HEALTH_BAR_WIDTH as u32)
