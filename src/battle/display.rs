@@ -319,6 +319,7 @@ enum AnimationState<'a> {
     PlayerShoot { bullet: Object<'a>, x: i32 },
     PlayerActivateShield { amount: u32, frame: usize },
     PlayerDisrupt { bullet: Object<'a>, x: i32 },
+    PlayerHeal {},
     EnemyShoot { bullet: Object<'a>, x: i32 },
     EnemyShield { amount: u32, frame: usize },
     EnemyHeal {},
@@ -348,6 +349,7 @@ impl<'a> AnimationStateHolder<'a> {
                 bullet: obj.object(obj.sprite(DISRUPT_BULLET)),
                 x: 64,
             },
+            Action::PlayerHeal { .. } => AnimationState::PlayerHeal {},
             Action::EnemyShoot { .. } => AnimationState::EnemyShoot {
                 bullet: obj.object(obj.sprite(BULLET_SPRITE)),
                 x: 175,
@@ -439,6 +441,9 @@ impl<'a> AnimationStateHolder<'a> {
                 }
             }
             AnimationState::EnemyHeal {} => {
+                AnimationUpdateState::RemoveWithAction(self.action.clone()) // TODO: Animation for healing
+            }
+            AnimationState::PlayerHeal {} => {
                 AnimationUpdateState::RemoveWithAction(self.action.clone()) // TODO: Animation for healing
             }
         }
