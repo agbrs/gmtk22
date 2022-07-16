@@ -5,7 +5,7 @@ use agb::{hash_map::HashMap, input::Button};
 use alloc::vec;
 use alloc::vec::Vec;
 
-use self::display::{Actions, BattleScreenDisplay};
+use self::display::{Action, Actions, BattleScreenDisplay};
 
 mod display;
 
@@ -59,6 +59,13 @@ enum DieState {
 }
 
 #[derive(Debug)]
+pub enum Action {
+    PlayerActivateShield { amount: u32 },
+    PlayerShoot { damage: u32, piercing: u32 },
+    PlayerDisrupt { amount: u32 },
+}
+
+#[derive(Debug)]
 struct RolledDice {
     rolls: Vec<DieState>,
 }
@@ -97,6 +104,102 @@ impl RolledDice {
             DieState::Rolling(_, face) => (*face, None),
             DieState::Rolled(rolled_die) => (rolled_die.face, rolled_die.cooldown()),
         })
+    }
+
+    fn accept_rolls(
+        &mut self,
+        player_state: &PlayerState,
+        enemy_state: &EnemyState,
+        player_dice: &PlayerDice,
+    ) -> Vec<Action> {
+        let mut actions = vec![];
+
+        let mut face_counts: HashMap<Face, u32> = HashMap::new();
+        for face in self.faces_for_accepting() {
+            match face {
+                Face::DoubleShot => *face_counts.entry(Face::Shoot).or_default() += 2,
+                Face::TripleShot => *face_counts.entry(Face::Shoot).or_default() += 3,
+                other => *face_counts.entry(other).or_default() += 1,
+            }
+        }
+
+        // shield
+        if let Some(shield) = face_counts.get(&Face::Shield) {
+            actions.push(Action::PlayerActivateShield { amount: *shield });
+        }
+
+        // shooting
+        let shoot = *face_counts.entry(Face::Shoot).or_default();
+        let shoot_power = (shoot * (shoot + 1)) / 2;
+
+        if shoot_power > 0 {
+            actions.push(Action::PlayerShoot {
+                damage: shoot_power,
+                piercing: *face_counts.entry(Face::Bypass).or_default(),
+            });
+        }
+
+        // disrupt
+        let disrupt = *face_counts.entry(Face::Disrupt).or_default();
+        let disrupt_power = (disrupt * (disrupt + 1)) / 2;
+
+        if disrupt_power > 0 {
+            actions.push(Action::PlayerDisrupt {
+                amount: disrupt_power,
+            });
+        }
+
+        let mut malfunction_all = false;
+
+        for roll in self.rolls.iter_mut().filter_map(|face| match face {
+            DieState::Rolled(rolled_die) => Some(rolled_die),
+            _ => None,
+        }) {
+            if roll.face == Face::DoubleShot {
+                roll.cooldown = MALFUNCTION_COOLDOWN_FRAMES;
+                roll.face = Face::Malfunction;
+            }
+            if roll.face == Face::TripleShot {
+                malfunction_all = true;
+            }
+        }
+
+        if malfunction_all {
+            for roll in self.rolls.iter_mut().filter_map(|face| match face {
+                DieState::Rolled(rolled_die) => Some(rolled_die),
+                _ => None,
+            }) {
+                roll.cooldown = MALFUNCTION_COOLDOWN_FRAMES;
+                roll.face = Face::Malfunction;
+            }
+        }
+
+        // reroll non-malfunctions after accepting
+        for i in 0..player_dice.dice.len() {
+            self.roll_die(i, ROLL_TIME_FRAMES_ALL, true, player_dice);
+        }
+
+        actions
+    }
+
+    fn roll_die(
+        &mut self,
+        die_index: usize,
+        time: u32,
+        is_after_accept: bool,
+        player_dice: &PlayerDice,
+    ) {
+        if let DieState::Rolled(ref selected_rolled_die) = self.rolls[die_index] {
+            let can_reroll = if is_after_accept {
+                selected_rolled_die.can_reroll_after_accept()
+            } else {
+                selected_rolled_die.can_reroll()
+            };
+
+            if can_reroll {
+                self.rolls[die_index] = DieState::Rolling(time, player_dice.dice[die_index].roll());
+            }
+        }
     }
 }
 
@@ -210,114 +313,14 @@ pub struct CurrentBattleState {
 }
 
 impl CurrentBattleState {
-    fn accept_rolls(&mut self) -> Vec<Actions> {
-        let mut animations = vec![];
-
-        let mut face_counts: HashMap<Face, u32> = HashMap::new();
-        for face in self.rolled_dice.faces_for_accepting() {
-            match face {
-                Face::DoubleShot => *face_counts.entry(Face::Shoot).or_default() += 2,
-                Face::TripleShot => *face_counts.entry(Face::Shoot).or_default() += 3,
-                other => *face_counts.entry(other).or_default() += 1,
-            }
-        }
-
-        // shield
-        let shield = face_counts.entry(Face::Shield).or_default();
-
-        if *shield > self.player.shield_count {
-            self.player.shield_count = *shield;
-            animations.push(Actions::PlayerNewShield);
-        }
-
-        // shooting
-        let shoot = *face_counts.entry(Face::Shoot).or_default();
-        let shoot_power = (shoot * (shoot + 1)) / 2;
-        let enemy_shield_equiv = self
-            .enemy
-            .shield_count
-            .saturating_sub(*face_counts.entry(Face::Bypass).or_default());
-
-        if shoot_power >= enemy_shield_equiv {
-            if enemy_shield_equiv > 0 {
-                self.enemy.shield_count = 0;
-            } else {
-                self.enemy.shield_count = 0;
-                self.enemy.health = self.enemy.health.saturating_sub(shoot_power);
-            }
-
-            if self.enemy.shield_count > 0 {
-                animations.push(Actions::PlayerBreakShield);
-            } else {
-                animations.push(Actions::PlayerShootEnemy);
-            }
-        }
-
-        // disrupt
-
-        let disrupt = *face_counts.entry(Face::Disrupt).or_default();
-        let disrupt_power = (disrupt * (disrupt + 1)) / 2;
-        for a in self.attacks.iter_mut().flatten() {
-            a.cooldown += disrupt_power * 60;
-            // TODO: disrupt animation
-        }
-
-        let mut malfunction_all = false;
-
-        for roll in self
-            .rolled_dice
-            .rolls
-            .iter_mut()
-            .filter_map(|face| match face {
-                DieState::Rolled(rolled_die) => Some(rolled_die),
-                _ => None,
-            })
-        {
-            if roll.face == Face::DoubleShot {
-                roll.cooldown = MALFUNCTION_COOLDOWN_FRAMES;
-                roll.face = Face::Malfunction;
-            }
-            if roll.face == Face::TripleShot {
-                malfunction_all = true;
-            }
-        }
-
-        if malfunction_all {
-            for roll in self
-                .rolled_dice
-                .rolls
-                .iter_mut()
-                .filter_map(|face| match face {
-                    DieState::Rolled(rolled_die) => Some(rolled_die),
-                    _ => None,
-                })
-            {
-                roll.cooldown = MALFUNCTION_COOLDOWN_FRAMES;
-                roll.face = Face::Malfunction;
-            }
-        }
-
-        // reroll non-malfunctions after accepting
-        for i in 0..self.player_dice.dice.len() {
-            self.roll_die(i, ROLL_TIME_FRAMES_ALL, true);
-        }
-
-        animations
+    fn accept_rolls(&mut self) -> Vec<Action> {
+        self.rolled_dice
+            .accept_rolls(&self.player, &self.enemy, &self.player_dice)
     }
 
     fn roll_die(&mut self, die_index: usize, time: u32, is_after_accept: bool) {
-        if let DieState::Rolled(ref selected_rolled_die) = self.rolled_dice.rolls[die_index] {
-            let can_reroll = if is_after_accept {
-                selected_rolled_die.can_reroll_after_accept()
-            } else {
-                selected_rolled_die.can_reroll()
-            };
-
-            if can_reroll {
-                self.rolled_dice.rolls[die_index] =
-                    DieState::Rolling(time, self.player_dice.dice[die_index].roll());
-            }
-        }
+        self.rolled_dice
+            .roll_die(die_index, time, is_after_accept, &self.player_dice);
     }
 
     fn update(&mut self) -> Vec<Actions> {
@@ -424,8 +427,8 @@ pub(crate) fn battle_screen(agb: &mut Agb, player_dice: PlayerDice, current_leve
         }
 
         if input.is_just_pressed(Button::START) {
-            for animation in current_battle_state.accept_rolls() {
-                battle_screen_display.add_animation(animation, obj);
+            for action in current_battle_state.accept_rolls() {
+                battle_screen_display.add_animation(action, obj);
             }
             agb.sfx.roll_multi();
         }
