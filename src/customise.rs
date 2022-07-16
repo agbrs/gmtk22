@@ -1,6 +1,7 @@
 use agb::{
     display::{
         object::{Object, ObjectController},
+        palette16::Palette16,
         tiled::{RegularMap, TileSet, TileSetting},
         HEIGHT, WIDTH,
     },
@@ -16,6 +17,8 @@ use crate::{
 };
 
 include_gfx!("gfx/descriptions.toml");
+
+pub const DESCRIPTIONS_PALETTE: &Palette16 = &descriptions::descriptions.palettes[0];
 
 enum CustomiseState {
     Dice {
@@ -255,7 +258,7 @@ pub(crate) fn customise_screen(
                                     y * 8 + x + 8 * 11 * upgrades[*upgrade] as u16,
                                     false,
                                     false,
-                                    0,
+                                    1,
                                 ),
                             )
                         }

@@ -6,7 +6,10 @@ use agb::{
 include_gfx!("gfx/stars.toml");
 
 pub fn load_palettes(vram: &mut VRamManager) {
-    vram.set_background_palettes(stars::stars.palettes);
+    vram.set_background_palettes(&[
+        stars::stars.palettes[0].clone(),
+        crate::customise::DESCRIPTIONS_PALETTE.clone(),
+    ]);
 }
 
 // Expects a 64x32 map
