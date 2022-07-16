@@ -96,9 +96,7 @@ impl RolledDice {
 
     fn faces_for_accepting(&self) -> impl Iterator<Item = Face> + '_ {
         self.rolls.iter().filter_map(|state| match state {
-            DieState::Rolled(rolled_die) if rolled_die.face != Face::Malfunction => {
-                Some(rolled_die.face)
-            }
+            DieState::Rolled(rolled_die) => Some(rolled_die.face),
             _ => None,
         })
     }
