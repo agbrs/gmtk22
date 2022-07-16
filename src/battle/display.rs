@@ -1,4 +1,5 @@
 use agb::display::object::{Object, ObjectController};
+use alloc::vec;
 use alloc::vec::Vec;
 
 use crate::{
@@ -22,15 +23,30 @@ pub struct BattleScreenDisplay<'a> {
     enemy_health: FractionDisplay<'a>,
 
     enemy_attack_display: Vec<EnemyAttackDisplay<'a>>,
+
+    _misc_sprites: Vec<Object<'a>>,
 }
 
 const HEALTH_BAR_WIDTH: usize = 48;
 
 impl<'a> BattleScreenDisplay<'a> {
     pub fn new(obj: &'a ObjectController, current_battle_state: &CurrentBattleState) -> Self {
+        let mut misc_sprites = vec![];
         let player_x = 12;
         let player_y = 8;
         let enemy_x = 167;
+
+        let player_sprite = SHIP_SPRITES.sprite_for_ship(Ship::Player);
+        let enemy_sprite = SHIP_SPRITES.sprite_for_ship(Ship::Drone);
+
+        let mut player_obj = obj.object(obj.sprite(player_sprite));
+        let mut enemy_obj = obj.object(obj.sprite(enemy_sprite));
+
+        player_obj.set_x(player_x).set_y(player_y).set_z(1).show();
+        enemy_obj.set_x(enemy_x).set_y(player_y).set_z(1).show();
+
+        misc_sprites.push(player_obj);
+        misc_sprites.push(enemy_obj);
 
         let dice: Vec<_> = current_battle_state
             .rolled_dice
@@ -150,6 +166,7 @@ impl<'a> BattleScreenDisplay<'a> {
             enemy_health: enemy_health_display,
 
             enemy_attack_display,
+            _misc_sprites: misc_sprites,
         }
     }
 

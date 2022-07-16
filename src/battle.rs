@@ -1,7 +1,7 @@
 use crate::{
-    graphics::{BULLET_SPRITE, SELECT_BOX, SHIP_SPRITES},
+    graphics::{BULLET_SPRITE, SELECT_BOX},
     level_generation::generate_attack,
-    Agb, EnemyAttackType, Face, PlayerDice, Ship,
+    Agb, EnemyAttackType, Face, PlayerDice,
 };
 use agb::{hash_map::HashMap, input::Button};
 use alloc::vec::Vec;
@@ -312,19 +312,6 @@ impl CurrentBattleState {
 
 pub(crate) fn battle_screen(agb: &mut Agb, player_dice: PlayerDice, current_level: u32) {
     let obj = &agb.obj;
-
-    let player_sprite = SHIP_SPRITES.sprite_for_ship(Ship::Player);
-    let enemy_sprite = SHIP_SPRITES.sprite_for_ship(Ship::Drone);
-
-    let mut player_obj = obj.object(obj.sprite(player_sprite));
-    let mut enemy_obj = obj.object(obj.sprite(enemy_sprite));
-
-    let player_x = 12;
-    let player_y = 8;
-    let enemy_x = 167;
-
-    player_obj.set_x(player_x).set_y(player_y).set_z(1).show();
-    enemy_obj.set_x(enemy_x).set_y(player_y).set_z(1).show();
 
     let mut select_box_obj = agb.obj.object(agb.obj.sprite(SELECT_BOX.sprite(0)));
     select_box_obj.show();
