@@ -313,7 +313,7 @@ impl CurrentBattleState {
         self.rolled_dice.update(&self.player_dice);
     }
 
-    fn apply_action(&mut self, action: Action) {
+    fn apply_action(&mut self, action: Action) -> Option<Action> {
         match action {
             Action::PlayerActivateShield { amount } => todo!(),
             Action::PlayerShoot { damage, piercing } => todo!(),
@@ -369,10 +369,14 @@ pub(crate) fn battle_screen(agb: &mut Agb, player_dice: PlayerDice, current_leve
     loop {
         counter = counter.wrapping_add(1);
 
-        if battle_screen_display.update(obj, &current_battle_state) {
-            for action in current_battle_state.update() {
-                // battle_screen_display.add_animation(animation, obj);
+        for action_to_apply in battle_screen_display.update(obj, &current_battle_state) {
+            if let Some(action_to_return) = current_battle_state.apply_action(action_to_apply) {
+                battle_screen_display.add_action(action_to_return, obj);
             }
+        }
+
+        for action in current_battle_state.update() {
+            battle_screen_display.add_action(action, obj);
         }
 
         current_battle_state.update_dice();
@@ -402,7 +406,7 @@ pub(crate) fn battle_screen(agb: &mut Agb, player_dice: PlayerDice, current_leve
 
         if input.is_just_pressed(Button::START) {
             for action in current_battle_state.accept_rolls() {
-                // battle_screen_display.add_animation(action, obj);
+                battle_screen_display.add_action(action, obj);
             }
             agb.sfx.roll_multi();
         }

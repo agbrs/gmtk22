@@ -188,7 +188,9 @@ impl<'a> BattleScreenDisplay<'a> {
         &mut self,
         obj: &'a ObjectController,
         current_battle_state: &CurrentBattleState,
-    ) -> bool {
+    ) -> Vec<Action> {
+        let mut actions_to_apply = vec![];
+
         // update the dice display to display the current values
         for ((die_obj, (current_face, cooldown)), cooldown_healthbar) in self
             .objs
@@ -210,9 +212,13 @@ impl<'a> BattleScreenDisplay<'a> {
 
         let mut animations_to_remove = vec![];
         for (i, animation) in self.animations.iter_mut().enumerate() {
-            // if animation.update(&mut self.objs, obj, current_battle_state) {
-            //     animations_to_remove.push(i);
-            // }
+            match animation.update(&mut self.objs, obj, current_battle_state) {
+                AnimationUpdateState::RemoveWithAction(a) => {
+                    actions_to_apply.push(a);
+                    animations_to_remove.push(i);
+                }
+                AnimationUpdateState::Continue => {}
+            }
         }
 
         for &animation_to_remove in animations_to_remove.iter().rev() {
@@ -263,10 +269,10 @@ impl<'a> BattleScreenDisplay<'a> {
             self.objs.enemy_attack_display[i].update(attack, obj);
         }
 
-        true
+        actions_to_apply
     }
 
-    pub fn add_animation(&mut self, action: Action, obj: &'a ObjectController) {
+    pub fn add_action(&mut self, action: Action, obj: &'a ObjectController) {
         self.animations
             .push(AnimationStateHolder::for_action(action, obj))
     }
