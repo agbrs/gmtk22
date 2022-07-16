@@ -165,17 +165,6 @@ pub(crate) fn customise_screen(
         agb::display::tiled::TileFormat::FourBpp,
     );
 
-    for y in 0..11 {
-        for x in 0..8 {
-            descriptions_map.set_tile(
-                &mut agb.vram,
-                (x, y).into(),
-                &descriptions_tileset,
-                TileSetting::new(y * 8 + x, false, false, 0),
-            )
-        }
-    }
-
     // create the dice
 
     let mut _net = create_net(&agb.obj, &player_dice.dice[0]);
@@ -242,7 +231,7 @@ pub(crate) fn customise_screen(
                     state = CustomiseState::Upgrade {
                         dice: *dice,
                         face: *face,
-                        upgrade: 0,
+                        upgrade: upgrades.len(),
                     };
                 }
             }
@@ -251,8 +240,27 @@ pub(crate) fn customise_screen(
                 face,
                 upgrade,
             } => {
+                let old_updade = *upgrade;
                 *upgrade =
                     (*upgrade as isize + ud as isize).rem_euclid(upgrades.len() as isize) as usize;
+
+                if *upgrade != old_updade {
+                    for y in 0..11 {
+                        for x in 0..8 {
+                            descriptions_map.set_tile(
+                                &mut agb.vram,
+                                (x, y).into(),
+                                &descriptions_tileset,
+                                TileSetting::new(
+                                    y * 8 + x + 8 * 11 * upgrades[*upgrade] as u16,
+                                    false,
+                                    false,
+                                    0,
+                                ),
+                            )
+                        }
+                    }
+                }
 
                 let (x, y) = upgrade_position(*upgrade);
                 select_box.set_x((x - 32 / 2) as u16);
