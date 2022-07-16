@@ -2,7 +2,7 @@ use agb::display::object::{Object, ObjectController};
 use alloc::vec;
 use alloc::vec::Vec;
 
-use crate::graphics::SHIELD;
+use crate::graphics::{DISRUPT_BULLET, SHIELD};
 use crate::{
     graphics::{
         FractionDisplay, HealthBar, NumberDisplay, BULLET_SPRITE, ENEMY_ATTACK_SPRITES,
@@ -318,6 +318,7 @@ impl<'a> EnemyAttackDisplay<'a> {
 enum AnimationState<'a> {
     PlayerShoot { bullet: Object<'a>, x: i32 },
     PlayerActivateShield { amount: u32, frame: usize },
+    PlayerDisrupt { bullet: Object<'a>, x: i32 },
     EnemyShoot { bullet: Object<'a>, x: i32 },
     EnemyShield { amount: u32, frame: usize },
     EnemyHeal {},
@@ -343,7 +344,10 @@ impl<'a> AnimationStateHolder<'a> {
                 bullet: obj.object(obj.sprite(BULLET_SPRITE)),
                 x: 64,
             },
-            Action::PlayerDisrupt { .. } => todo!(),
+            Action::PlayerDisrupt { .. } => AnimationState::PlayerDisrupt {
+                bullet: obj.object(obj.sprite(DISRUPT_BULLET)),
+                x: 64,
+            },
             Action::EnemyShoot { .. } => AnimationState::EnemyShoot {
                 bullet: obj.object(obj.sprite(BULLET_SPRITE)),
                 x: 175,
@@ -365,6 +369,16 @@ impl<'a> AnimationStateHolder<'a> {
             AnimationState::PlayerShoot { bullet, x } => {
                 bullet.show().set_x(*x as u16).set_y(36);
                 *x += 4;
+
+                if *x > 180 {
+                    AnimationUpdateState::RemoveWithAction(self.action.clone())
+                } else {
+                    AnimationUpdateState::Continue
+                }
+            }
+            AnimationState::PlayerDisrupt { bullet, x } => {
+                bullet.show().set_x(*x as u16).set_y(36);
+                *x += 2;
 
                 if *x > 180 {
                     AnimationUpdateState::RemoveWithAction(self.action.clone())

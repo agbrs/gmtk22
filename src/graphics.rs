@@ -17,6 +17,7 @@ pub const SELECT_BOX: &Tag = SPRITES.tags().get("selection");
 pub const SELECTED_BOX: &Tag = SPRITES.tags().get("selected");
 
 pub const BULLET_SPRITE: &Sprite = SPRITES.tags().get("bullet").sprite(0);
+pub const DISRUPT_BULLET: &Sprite = SPRITES.tags().get("disrupt bullet").sprite(0);
 pub const SHIELD: &Tag = SPRITES.tags().get("ship shield");
 
 pub const SHIP_SPRITES: &ShipSprites = &ShipSprites::load_ship_sprites();

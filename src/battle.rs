@@ -328,7 +328,14 @@ impl CurrentBattleState {
 
                 None
             }
-            Action::PlayerDisrupt { amount } => todo!(),
+            Action::PlayerDisrupt { amount } => {
+                for attack in self.attacks.iter_mut().flatten() {
+                    attack.cooldown += amount * 120;
+                    attack.max_cooldown = attack.cooldown.max(attack.max_cooldown);
+                }
+
+                None
+            }
             Action::EnemyShoot { damage } => {
                 if self.player.shield_count == 0 {
                     self.player.health = self.player.health.saturating_sub(damage);
