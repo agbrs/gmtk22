@@ -5,8 +5,8 @@ use crate::{
 use agb::{hash_map::HashMap, input::Button};
 use alloc::vec::Vec;
 
-const MALFUNCTION_COOLDOWN_FRAMES: u32 = 3 * 60;
-const ROLL_TIME_FRAMES: u32 = 60;
+const MALFUNCTION_COOLDOWN_FRAMES: u32 = 5 * 60;
+const ROLL_TIME_FRAMES: u32 = 2 * 60;
 
 /// A face of the rolled die and it's cooldown (should it be a malfunction)
 #[derive(Debug)]
