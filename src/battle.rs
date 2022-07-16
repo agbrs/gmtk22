@@ -330,7 +330,7 @@ impl CurrentBattleState {
             }
             Action::PlayerDisrupt { amount } => {
                 for attack in self.attacks.iter_mut().flatten() {
-                    attack.cooldown += amount * 120;
+                    attack.cooldown += amount * 240;
                     attack.max_cooldown = attack.cooldown.max(attack.max_cooldown);
                 }
 
@@ -453,6 +453,11 @@ pub(crate) fn battle_screen(agb: &mut Agb, player_dice: PlayerDice, current_leve
         agb.star_background.update();
         agb.sfx.frame();
         agb.vblank.wait_for_vblank();
+
+        if current_battle_state.enemy.health == 0 {
+            return;
+        }
+
         agb.obj.commit();
         agb.star_background.commit(&mut agb.vram);
     }
