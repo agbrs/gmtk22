@@ -1,6 +1,9 @@
 use crate::{
-    graphics::{HealthBar, NumberDisplay, FACE_SPRITES, SELECT_BOX, SHIP_SPRITES},
-    Agb, Face, PlayerDice, Ship,
+    graphics::{
+        HealthBar, NumberDisplay, ENEMY_ATTACK_SPRITES, FACE_SPRITES, SELECT_BOX, SHIP_SPRITES,
+    },
+    level_generation::generate_attack,
+    Agb, EnemyAttackType, Face, PlayerDice, Ship,
 };
 use agb::{hash_map::HashMap, input::Button};
 use alloc::vec::Vec;
@@ -100,6 +103,66 @@ struct PlayerState {
 }
 
 #[derive(Debug)]
+pub enum EnemyAttack {
+    Shoot(u32),
+    Shield,
+    Heal(u32),
+}
+
+impl EnemyAttack {
+    fn apply_effect(&self, player_state: &mut PlayerState, enemy_state: &mut EnemyState) {
+        match self {
+            EnemyAttack::Shoot(damage) => {
+                if *damage > player_state.shield_count {
+                    if player_state.shield_count > 0 {
+                        player_state.shield_count -= 1;
+                    } else {
+                        player_state.health = player_state.health.saturating_sub(*damage);
+                    }
+                }
+            }
+            EnemyAttack::Shield => {
+                if enemy_state.shield_count < 5 {
+                    enemy_state.shield_count += 1;
+                }
+            }
+            EnemyAttack::Heal(amount) => {
+                enemy_state.health = enemy_state.max_health.min(enemy_state.health + amount);
+            }
+        }
+    }
+}
+
+#[derive(Debug)]
+struct EnemyAttackState {
+    attack: EnemyAttack,
+    cooldown: u32,
+    max_cooldown: u32,
+}
+
+impl EnemyAttackState {
+    fn attack_type(&self) -> EnemyAttackType {
+        match self.attack {
+            EnemyAttack::Shoot(_) => EnemyAttackType::Attack,
+            EnemyAttack::Shield => EnemyAttackType::Shield,
+            EnemyAttack::Heal(_) => EnemyAttackType::Heal,
+        }
+    }
+
+    #[must_use]
+    fn update(&mut self, player_state: &mut PlayerState, enemy_state: &mut EnemyState) -> bool {
+        if self.cooldown == 0 {
+            self.attack.apply_effect(player_state, enemy_state);
+            return true;
+        }
+
+        self.cooldown -= 1;
+
+        false
+    }
+}
+
+#[derive(Debug)]
 struct EnemyState {
     shield_count: u32,
     health: u32,
@@ -112,6 +175,8 @@ struct CurrentBattleState {
     enemy: EnemyState,
     rolled_dice: RolledDice,
     player_dice: PlayerDice,
+    attacks: [Option<EnemyAttackState>; 2],
+    current_level: u32,
 }
 
 impl CurrentBattleState {
@@ -153,11 +218,29 @@ impl CurrentBattleState {
             }
         }
     }
+
+    fn update(&mut self) {
+        self.rolled_dice.update(&self.player_dice);
+
+        for attack in self.attacks.iter_mut() {
+            if let Some(attack_state) = attack {
+                if attack_state.update(&mut self.player, &mut self.enemy) {
+                    attack.take();
+                }
+            } else if let Some(generated_attack) = generate_attack(self.current_level) {
+                attack.replace(EnemyAttackState {
+                    attack: generated_attack.attack,
+                    cooldown: generated_attack.cooldown,
+                    max_cooldown: generated_attack.cooldown,
+                });
+            };
+        }
+    }
 }
 
 const HEALTH_BAR_WIDTH: usize = 48;
 
-pub(crate) fn battle_screen(agb: &mut Agb, player_dice: PlayerDice) {
+pub(crate) fn battle_screen(agb: &mut Agb, player_dice: PlayerDice, current_level: u32) {
     let obj = &agb.obj;
 
     let player_sprite = SHIP_SPRITES.sprite_for_ship(Ship::Player);
@@ -183,12 +266,12 @@ pub(crate) fn battle_screen(agb: &mut Agb, player_dice: PlayerDice) {
     let mut current_battle_state = CurrentBattleState {
         player: PlayerState {
             shield_count: 0,
-            health: 58,
+            health: 120,
             max_health: 120,
         },
         enemy: EnemyState {
-            shield_count: 5,
-            health: 38,
+            shield_count: 0,
+            health: 50,
             max_health: 50,
         },
         rolled_dice: RolledDice {
@@ -199,6 +282,8 @@ pub(crate) fn battle_screen(agb: &mut Agb, player_dice: PlayerDice) {
                 .collect(),
         },
         player_dice: player_dice.clone(),
+        attacks: [None, None],
+        current_level,
     };
 
     let mut dice_display: Vec<_> = current_battle_state
@@ -283,13 +368,30 @@ pub(crate) fn battle_screen(agb: &mut Agb, player_dice: PlayerDice) {
         obj,
     );
 
+    let mut enemy_attack_display: Vec<_> = (0..2)
+        .into_iter()
+        .map(|i| {
+            let mut attack_obj = obj.object(
+                obj.sprite(ENEMY_ATTACK_SPRITES.sprite_for_attack(EnemyAttackType::Attack)),
+            );
+
+            let attack_obj_position = (120, 56 + 32 * i).into();
+            attack_obj.set_position(attack_obj_position).hide();
+
+            let mut attack_cooldown = HealthBar::new(attack_obj_position + (32, 8).into(), 48, obj);
+            attack_cooldown.hide();
+
+            (attack_obj, attack_cooldown)
+        })
+        .collect();
+
     let mut selected_die = 0usize;
     let mut input = agb::input::ButtonController::new();
     let mut counter = 0usize;
 
     loop {
         counter = counter.wrapping_add(1);
-        current_battle_state.rolled_dice.update(&player_dice);
+        current_battle_state.update();
 
         input.update();
 
@@ -373,10 +475,27 @@ pub(crate) fn battle_screen(agb: &mut Agb, player_dice: PlayerDice) {
             obj,
         );
 
+        for (i, attack) in current_battle_state.attacks.iter().enumerate() {
+            let attack_display = &mut enemy_attack_display[i];
+
+            if let Some(attack) = attack {
+                attack_display.0.show().set_sprite(
+                    obj.sprite(ENEMY_ATTACK_SPRITES.sprite_for_attack(attack.attack_type())),
+                );
+                attack_display
+                    .1
+                    .set_value((attack.cooldown * 48 / attack.max_cooldown) as usize, obj);
+                attack_display.1.show();
+            } else {
+                attack_display.0.hide();
+                attack_display.1.hide();
+            }
+        }
+
         select_box_obj
             .set_y(120 - 4)
-            .set_x(selected_die as u16 * 40 + 28 - 4);
-        select_box_obj.set_sprite(agb.obj.sprite(SELECT_BOX.animation_sprite(counter / 10)));
+            .set_x(selected_die as u16 * 40 + 28 - 4)
+            .set_sprite(agb.obj.sprite(SELECT_BOX.animation_sprite(counter / 10)));
 
         agb.star_background.update();
         agb.vblank.wait_for_vblank();

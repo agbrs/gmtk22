@@ -24,6 +24,7 @@ mod background;
 mod battle;
 mod customise;
 mod graphics;
+mod level_generation;
 
 use background::StarBackground;
 
@@ -39,6 +40,13 @@ pub enum Ship {
     Player,
     Drone,
     Shield,
+}
+
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Hash)]
+pub enum EnemyAttackType {
+    Attack,
+    Shield,
+    Heal,
 }
 
 #[derive(Debug, Clone)]
@@ -110,10 +118,14 @@ fn main(mut gba: agb::Gba) -> ! {
         dice: vec![basic_die; 5],
     };
 
+    let mut current_level = 1;
+
     loop {
         dice = customise::customise_screen(&mut agb, dice.clone());
 
-        battle::battle_screen(&mut agb, dice.clone());
+        battle::battle_screen(&mut agb, dice.clone(), current_level);
+
+        current_level += 1;
     }
 }
 
