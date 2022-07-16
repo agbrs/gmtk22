@@ -178,13 +178,14 @@ fn generate_upgrades(level: u32) -> Vec<Face> {
     while upgrades.len() != 3 {
         attempts += 1;
         let next = potential_upgrades[rng::gen() as usize % potential_upgrades.len()];
+        let number_of_malfunctions = upgrades
+            .iter()
+            .chain(core::iter::once(&next))
+            .filter(|&x| *x == Face::Malfunction)
+            .count();
+        let maximum_number_of_malfunctions = if level < 5 { 0 } else { 1 };
         if upgrade_value(&upgrades, next) < max_upgrade_value
-            && upgrades
-                .iter()
-                .chain(core::iter::once(&next))
-                .filter(|&x| *x == Face::Malfunction)
-                .count()
-                <= 1
+            && number_of_malfunctions <= maximum_number_of_malfunctions
         {
             upgrades.push(next);
             attempts = 0;
