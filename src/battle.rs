@@ -2,6 +2,8 @@ use crate::{Agb, Face, PlayerDice, ShipSprites, FACE_SPRITES, SELECT_BOX, SHIP_S
 use agb::{hash_map::HashMap, input::Button};
 use alloc::vec::Vec;
 
+const MALFUNCTION_COOLDOWN_FRAMES: u32 = 3 * 60;
+
 /// A face of the rolled die and it's cooldown (should it be a malfunction)
 #[derive(Debug)]
 
@@ -78,7 +80,7 @@ pub(crate) fn battle_screen(agb: &mut Agb, player_dice: PlayerDice) {
     let mut select_box_obj = agb.obj.object(agb.obj.sprite(SELECT_BOX.sprite(0)));
     select_box_obj.show();
 
-    let current_battle_state = CurrentBattleState {
+    let mut current_battle_state = CurrentBattleState {
         player: PlayerState {
             shield_count: 0,
             health: 100,
@@ -112,17 +114,13 @@ pub(crate) fn battle_screen(agb: &mut Agb, player_dice: PlayerDice) {
 
     let mut selected_die = 0usize;
     let mut input = agb::input::ButtonController::new();
+    let mut counter = 0usize;
 
     loop {
-        input.update();
+        counter = counter.wrapping_add(1);
+        current_battle_state.rolled_dice.update();
 
-        // update the dice display to display the current values
-        for (die_obj, current_roll) in dice_display
-            .iter_mut()
-            .zip(current_battle_state.rolled_dice.rolls.iter())
-        {
-            die_obj.set_sprite(obj.sprite(FACE_SPRITES.sprite_for_face(current_roll.face)));
-        }
+        input.update();
 
         if input.is_just_pressed(Button::LEFT) {
             if selected_die == 0 {
@@ -140,9 +138,29 @@ pub(crate) fn battle_screen(agb: &mut Agb, player_dice: PlayerDice) {
             }
         }
 
+        if input.is_just_pressed(Button::A) {
+            let selected_rolled_die = &mut current_battle_state.rolled_dice.rolls[selected_die];
+            if selected_rolled_die.can_reroll() {
+                selected_rolled_die.face = player_dice.dice[selected_die].roll();
+
+                if selected_rolled_die.face == Face::Malfunction {
+                    selected_rolled_die.cooldown = MALFUNCTION_COOLDOWN_FRAMES;
+                }
+            }
+        }
+
+        // update the dice display to display the current values
+        for (die_obj, current_roll) in dice_display
+            .iter_mut()
+            .zip(current_battle_state.rolled_dice.rolls.iter())
+        {
+            die_obj.set_sprite(obj.sprite(FACE_SPRITES.sprite_for_face(current_roll.face)));
+        }
+
         select_box_obj
-            .set_y(120 - 3)
-            .set_x(selected_die as u16 * 40 + 28 - 3);
+            .set_y(120 - 4)
+            .set_x(selected_die as u16 * 40 + 28 - 4);
+        select_box_obj.set_sprite(agb.obj.sprite(SELECT_BOX.animation_sprite(counter / 10)));
 
         agb.star_background.update();
         agb.vblank.wait_for_vblank();
