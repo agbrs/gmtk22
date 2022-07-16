@@ -1,17 +1,28 @@
 use agb::display::object::{Object, ObjectController};
-use alloc::vec;
 use alloc::vec::Vec;
+use alloc::{collections::VecDeque, vec};
 
 use crate::{
     graphics::{
-        FractionDisplay, HealthBar, NumberDisplay, ENEMY_ATTACK_SPRITES, FACE_SPRITES, SHIP_SPRITES,
+        FractionDisplay, HealthBar, NumberDisplay, BULLET_SPRITE, ENEMY_ATTACK_SPRITES,
+        FACE_SPRITES, SHIP_SPRITES,
     },
     EnemyAttackType, Ship,
 };
 
 use super::{CurrentBattleState, EnemyAttackState, MALFUNCTION_COOLDOWN_FRAMES};
 
-pub struct BattleScreenDisplay<'a> {
+#[derive(Clone, Copy)]
+pub enum DisplayAnimation {
+    PlayerShootEnemy,
+    EnemyShootPlayer,
+    PlayerBreakShield,
+    EnemyBreakShield,
+    PlayerNewShield,
+    EnemyNewShield,
+}
+
+struct BattleScreenDisplayObjects<'a> {
     dice: Vec<Object<'a>>,
     dice_cooldowns: Vec<HealthBar<'a>>,
     player_shield: Vec<Object<'a>>,
@@ -23,6 +34,13 @@ pub struct BattleScreenDisplay<'a> {
     enemy_health: FractionDisplay<'a>,
 
     enemy_attack_display: Vec<EnemyAttackDisplay<'a>>,
+}
+
+pub struct BattleScreenDisplay<'a> {
+    objs: BattleScreenDisplayObjects<'a>,
+
+    animations_to_play: VecDeque<DisplayAnimation>,
+    current_animation: Option<AnimationState<'a>>,
 
     _misc_sprites: Vec<Object<'a>>,
 }
@@ -154,7 +172,7 @@ impl<'a> BattleScreenDisplay<'a> {
             })
             .collect();
 
-        Self {
+        let objs = BattleScreenDisplayObjects {
             dice,
             dice_cooldowns,
             player_shield,
@@ -166,17 +184,30 @@ impl<'a> BattleScreenDisplay<'a> {
             enemy_health: enemy_health_display,
 
             enemy_attack_display,
+        };
+
+        Self {
+            objs,
+
+            animations_to_play: VecDeque::new(),
+            current_animation: None,
+
             _misc_sprites: misc_sprites,
         }
     }
 
-    pub fn update(&mut self, obj: &'a ObjectController, current_battle_state: &CurrentBattleState) {
+    pub fn update(
+        &mut self,
+        obj: &'a ObjectController,
+        current_battle_state: &CurrentBattleState,
+    ) -> bool {
         // update the dice display to display the current values
         for ((die_obj, (current_face, cooldown)), cooldown_healthbar) in self
+            .objs
             .dice
             .iter_mut()
             .zip(current_battle_state.rolled_dice.faces_to_render())
-            .zip(self.dice_cooldowns.iter_mut())
+            .zip(self.objs.dice_cooldowns.iter_mut())
         {
             die_obj.set_sprite(obj.sprite(FACE_SPRITES.sprite_for_face(current_face)));
 
@@ -189,7 +220,7 @@ impl<'a> BattleScreenDisplay<'a> {
             }
         }
 
-        for (i, player_shield) in self.player_shield.iter_mut().enumerate() {
+        for (i, player_shield) in self.objs.player_shield.iter_mut().enumerate() {
             if i < current_battle_state.player.shield_count as usize {
                 player_shield.show();
             } else {
@@ -197,7 +228,7 @@ impl<'a> BattleScreenDisplay<'a> {
             }
         }
 
-        for (i, player_shield) in self.enemy_shield.iter_mut().enumerate() {
+        for (i, player_shield) in self.objs.enemy_shield.iter_mut().enumerate() {
             if i < current_battle_state.enemy.shield_count as usize {
                 player_shield.show();
             } else {
@@ -205,33 +236,46 @@ impl<'a> BattleScreenDisplay<'a> {
             }
         }
 
-        self.player_healthbar.set_value(
+        self.objs.player_healthbar.set_value(
             ((current_battle_state.player.health * HEALTH_BAR_WIDTH as u32)
                 / current_battle_state.player.max_health) as usize,
             obj,
         );
 
-        self.enemy_healthbar.set_value(
+        self.objs.enemy_healthbar.set_value(
             ((current_battle_state.enemy.health * HEALTH_BAR_WIDTH as u32)
                 / current_battle_state.enemy.max_health) as usize,
             obj,
         );
 
-        self.player_health.set_value(
+        self.objs.player_health.set_value(
             current_battle_state.player.health as usize,
             current_battle_state.player.max_health as usize,
             obj,
         );
 
-        self.enemy_health.set_value(
+        self.objs.enemy_health.set_value(
             current_battle_state.enemy.health as usize,
             current_battle_state.enemy.max_health as usize,
             obj,
         );
 
         for (i, attack) in current_battle_state.attacks.iter().enumerate() {
-            self.enemy_attack_display[i].update(attack, obj);
+            self.objs.enemy_attack_display[i].update(attack, obj);
         }
+
+        if let Some(ref mut animation) = self.current_animation {
+            if animation.update(&mut self.objs, obj) {
+                self.current_animation = None;
+            }
+        } else {
+            self.current_animation = self
+                .animations_to_play
+                .pop_front()
+                .map(|anim| AnimationState::for_animation(anim, obj));
+        }
+
+        self.current_animation.is_some()
     }
 }
 
@@ -265,5 +309,52 @@ impl<'a> EnemyAttackDisplay<'a> {
             self.cooldown.hide();
             self.number.set_value(None, obj);
         }
+    }
+}
+
+enum AnimationState<'a> {
+    PlayerShootEnemy {
+        bullet: Object<'a>,
+        x_position: i32,
+    },
+    EnemyShootPlayer {
+        bullet: Object<'a>,
+        x_position: i32,
+    },
+    PlayerBreakShield {
+        bullet: Object<'a>,
+        x_position: i32,
+        shield_break_frame: i32,
+    },
+    EnemyBreakShield {
+        bullet: Object<'a>,
+        x_position: i32,
+        shield_break_frame: i32,
+    },
+    PlayerNewShield {
+        shield_frame: i32,
+    },
+    EnemyNewShield {
+        shield_frame: i32,
+    },
+}
+
+impl<'a> AnimationState<'a> {
+    fn for_animation(a: DisplayAnimation, obj: &'a ObjectController) -> Self {
+        match a {
+            DisplayAnimation::PlayerShootEnemy => Self::PlayerShootEnemy {
+                x_position: 88,
+                bullet: obj.object(obj.sprite(BULLET_SPRITE)),
+            },
+            _ => Self::PlayerNewShield { shield_frame: 0 },
+        }
+    }
+
+    fn update(
+        &mut self,
+        objs: &mut BattleScreenDisplayObjects<'a>,
+        obj: &'a ObjectController,
+    ) -> bool {
+        return true;
     }
 }

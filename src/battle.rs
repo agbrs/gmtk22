@@ -343,19 +343,16 @@ pub(crate) fn battle_screen(agb: &mut Agb, player_dice: PlayerDice, current_leve
 
     let mut battle_screen_display = BattleScreenDisplay::new(obj, &current_battle_state);
 
-    let mut enemy_bullet_obj = obj.object(obj.sprite(BULLET_SPRITE));
-    enemy_bullet_obj.hide().set_hflip(true);
-
-    let mut player_bullet_obj = obj.object(obj.sprite(BULLET_SPRITE));
-    player_bullet_obj.hide();
-
     let mut selected_die = 0usize;
     let mut input = agb::input::ButtonController::new();
     let mut counter = 0usize;
 
     loop {
         counter = counter.wrapping_add(1);
-        current_battle_state.update();
+
+        if battle_screen_display.update(obj, &current_battle_state) {
+            current_battle_state.update();
+        }
 
         input.update();
 
@@ -384,8 +381,6 @@ pub(crate) fn battle_screen(agb: &mut Agb, player_dice: PlayerDice, current_leve
             current_battle_state.accept_rolls();
             agb.sfx.roll_multi();
         }
-
-        battle_screen_display.update(obj, &current_battle_state);
 
         select_box_obj
             .set_y(120 - 4)
