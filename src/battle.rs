@@ -438,12 +438,16 @@ impl CurrentBattleState {
                 let damage =
                     self.player.shield_count * (self.player.shield_count + 1) * multiplier / 2;
                 self.player.shield_count = 0;
+                sfx.send_burst_shield();
 
                 Some(Action::PlayerSendBurstShield { damage })
             }
             Action::PlayerSendBurstShield { damage } => {
                 self.enemy.shield_count = 0;
                 self.enemy.health = self.enemy.health.saturating_sub(damage);
+
+                sfx.burst_shield_hit();
+                sfx.shield_down();
 
                 None
             }
