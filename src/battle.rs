@@ -113,6 +113,7 @@ impl RolledDice {
 
         let mut face_counts: HashMap<Face, u32> = HashMap::new();
         let mut shield_multiplier = 1;
+        let mut shoot_multiplier = 1;
         for face in self.faces_for_accepting() {
             match face {
                 Face::DoubleShot => *face_counts.entry(Face::Shoot).or_default() += 2,
@@ -120,6 +121,7 @@ impl RolledDice {
                 Face::DoubleShield => *face_counts.entry(Face::Shield).or_default() += 2,
                 Face::TripleShield => *face_counts.entry(Face::Shield).or_default() += 3,
                 Face::DoubleShieldValue => shield_multiplier *= 2,
+                Face::DoubleShotValue => shoot_multiplier *= 2,
                 other => *face_counts.entry(other).or_default() += 1,
             }
         }
@@ -149,7 +151,7 @@ impl RolledDice {
             }
         }
 
-        let shoot_power = shoot_power + malfunction_shoot;
+        let shoot_power = (shoot_power + malfunction_shoot) * shoot_multiplier;
 
         if shoot_power > 0 {
             actions.push(Action::PlayerShoot {
@@ -181,7 +183,10 @@ impl RolledDice {
             DieState::Rolled(rolled_die) => Some(rolled_die),
             _ => None,
         }) {
-            if roll.face == Face::DoubleShot || roll.face == Face::DoubleShield {
+            if roll.face == Face::DoubleShot
+                || roll.face == Face::DoubleShield
+                || roll.face == Face::DoubleShotValue
+            {
                 roll.cooldown = MALFUNCTION_COOLDOWN_FRAMES;
                 roll.face = Face::Malfunction;
             }
