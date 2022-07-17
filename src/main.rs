@@ -25,6 +25,7 @@ mod battle;
 mod customise;
 mod graphics;
 mod level_generation;
+mod save;
 mod sfx;
 
 use background::{show_title_screen, StarBackground};
@@ -94,6 +95,8 @@ struct Agb<'a> {
 }
 
 fn main(mut gba: agb::Gba) -> ! {
+    save::init_save();
+
     let gfx = gba.display.object.get();
     let vblank = agb::interrupt::VBlank::get();
 
