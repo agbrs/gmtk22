@@ -20,6 +20,7 @@ const MULTI_ROLLS: &[&[u8]] = &[
 
 const MENU_BGM: &[u8] = include_wav!("sfx/BGM_Menu.wav");
 const BATTLE_BGM: &[u8] = include_wav!("sfx/BGM_Fight.wav");
+const TITLE_BGM: &[u8] = include_wav!("sfx/BGM_Title.wav");
 
 const SHOOT: &[u8] = include_wav!("sfx/shoot.wav");
 const SHOT_HIT: &[u8] = include_wav!("sfx/shot_hit.wav");
@@ -40,6 +41,7 @@ const BURST_SHIELD_HIT: &[u8] = include_wav!("sfx/burst_shield_hit.wav");
 enum BattleOrMenu {
     Battle,
     Menu,
+    Title,
 }
 
 pub struct Sfx<'a> {
@@ -51,13 +53,13 @@ pub struct Sfx<'a> {
 
 impl<'a> Sfx<'a> {
     pub fn new(mixer: &'a mut Mixer) -> Self {
-        let mut menu_music = SoundChannel::new_high_priority(MENU_BGM);
-        menu_music.should_loop();
-        let menu_channel = mixer.play_sound(menu_music).unwrap();
+        let mut title_music = SoundChannel::new_high_priority(TITLE_BGM);
+        title_music.should_loop();
+        let menu_channel = mixer.play_sound(title_music).unwrap();
 
         Self {
             mixer,
-            state: BattleOrMenu::Menu,
+            state: BattleOrMenu::Title,
 
             current_bgm: menu_channel,
         }
@@ -88,13 +90,17 @@ impl<'a> Sfx<'a> {
             return;
         }
 
+        let should_restart = self.state == BattleOrMenu::Title;
+
         self.state = BattleOrMenu::Menu;
         let current_channel = self.mixer.channel(&self.current_bgm).unwrap();
         let pos = current_channel.pos();
         current_channel.stop();
 
         let mut menu_music = SoundChannel::new_high_priority(MENU_BGM);
-        menu_music.should_loop().set_pos(pos);
+        menu_music
+            .should_loop()
+            .set_pos(if should_restart { 0.into() } else { pos });
         self.current_bgm = self.mixer.play_sound(menu_music).unwrap();
     }
 
