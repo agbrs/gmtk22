@@ -1,3 +1,4 @@
+use crate::sfx::Sfx;
 use crate::{
     graphics::SELECT_BOX, level_generation::generate_attack, Agb, EnemyAttackType, Face, PlayerDice,
 };
@@ -368,7 +369,7 @@ impl CurrentBattleState {
         self.rolled_dice.update(&self.player_dice);
     }
 
-    fn apply_action(&mut self, action: Action) -> Option<Action> {
+    fn apply_action(&mut self, action: Action, sfx: &mut Sfx) -> Option<Action> {
         match action {
             Action::PlayerActivateShield { amount } => {
                 self.player.shield_count = self.player.shield_count.max(amount);
@@ -377,8 +378,10 @@ impl CurrentBattleState {
             Action::PlayerShoot { damage, piercing } => {
                 if self.enemy.shield_count <= piercing {
                     self.enemy.health = self.enemy.health.saturating_sub(damage);
+                    sfx.shot_hit();
                 } else if self.enemy.shield_count <= damage {
                     self.enemy.shield_count = 0; // TODO: Dispatch action of drop shield to animate that
+                    sfx.shield_down();
                 }
 
                 None
@@ -398,8 +401,10 @@ impl CurrentBattleState {
             Action::EnemyShoot { damage } => {
                 if self.player.shield_count == 0 {
                     self.player.health = self.player.health.saturating_sub(damage);
+                    sfx.shot_hit();
                 } else if self.player.shield_count <= damage {
                     self.player.shield_count = 0; // TODO: Dispatch action of drop shield to animate that
+                    sfx.shield_down();
                 }
 
                 None
@@ -475,10 +480,10 @@ pub(crate) fn battle_screen(agb: &mut Agb, player_dice: PlayerDice, current_leve
     loop {
         counter = counter.wrapping_add(1);
 
-        for action_to_apply in
-            battle_screen_display.update(obj, &current_battle_state, &mut agb.sfx)
-        {
-            if let Some(action_to_return) = current_battle_state.apply_action(action_to_apply) {
+        for action_to_apply in battle_screen_display.update(obj, &current_battle_state) {
+            if let Some(action_to_return) =
+                current_battle_state.apply_action(action_to_apply, &mut agb.sfx)
+            {
                 battle_screen_display.add_action(action_to_return, obj, &mut agb.sfx);
             }
         }
@@ -497,6 +502,8 @@ pub(crate) fn battle_screen(agb: &mut Agb, player_dice: PlayerDice, current_leve
             } else {
                 selected_die -= 1;
             }
+
+            agb.sfx.move_cursor();
         }
 
         if input.is_just_pressed(Button::RIGHT) {
@@ -505,6 +512,8 @@ pub(crate) fn battle_screen(agb: &mut Agb, player_dice: PlayerDice, current_leve
             } else {
                 selected_die += 1;
             }
+
+            agb.sfx.move_cursor();
         }
 
         if input.is_just_pressed(Button::A) {

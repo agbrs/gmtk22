@@ -25,6 +25,10 @@ const SHOOT: &[u8] = include_wav!("sfx/shoot.wav");
 const SHOT_HIT: &[u8] = include_wav!("sfx/shot_hit.wav");
 const SHIP_EXPLODE: &[u8] = include_wav!("sfx/ship_explode.wav");
 const MOVE_CURSOR: &[u8] = include_wav!("sfx/move_cursor.wav");
+const SELECT: &[u8] = include_wav!("sfx/select.wav");
+const BACK: &[u8] = include_wav!("sfx/back.wav");
+const ACCEPT: &[u8] = include_wav!("sfx/accept.wav");
+const SHIELD_DOWN: &[u8] = include_wav!("sfx/shield_down.wav");
 
 const MAX_CROSSFADE_FRAMES: i16 = 1;
 
@@ -133,5 +137,30 @@ impl<'a> Sfx<'a> {
         channel.volume(num!(0.5));
 
         self.mixer.play_sound(channel);
+    }
+
+    pub fn select(&mut self) {
+        let mut channel = SoundChannel::new(SELECT);
+        channel.volume(num!(0.75));
+
+        self.mixer.play_sound(channel);
+    }
+
+    pub fn back(&mut self) {
+        let mut channel = SoundChannel::new(BACK);
+        channel.volume(num!(0.5));
+
+        self.mixer.play_sound(channel);
+    }
+
+    pub fn accept(&mut self) {
+        let mut channel = SoundChannel::new(ACCEPT);
+        channel.volume(num!(0.5));
+
+        self.mixer.play_sound(channel);
+    }
+
+    pub fn shield_down(&mut self) {
+        self.mixer.play_sound(SoundChannel::new(SHIELD_DOWN));
     }
 }

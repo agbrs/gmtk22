@@ -189,7 +189,6 @@ impl<'a> BattleScreenDisplay<'a> {
         &mut self,
         obj: &'a ObjectController,
         current_battle_state: &CurrentBattleState,
-        sfx: &mut Sfx,
     ) -> Vec<Action> {
         for (i, player_shield) in self.objs.player_shield.iter_mut().enumerate() {
             if i < current_battle_state.player.shield_count as usize {
@@ -264,7 +263,6 @@ impl<'a> BattleScreenDisplay<'a> {
         for (i, animation) in self.animations.iter_mut().enumerate() {
             match animation.update(&mut self.objs, obj, current_battle_state) {
                 AnimationUpdateState::RemoveWithAction(a) => {
-                    play_sound_for_action_end(&a, sfx);
                     actions_to_apply.push(a);
                     animations_to_remove.push(i);
                 }
@@ -290,13 +288,6 @@ impl<'a> BattleScreenDisplay<'a> {
 fn play_sound_for_action_start(action: &Action, sfx: &mut Sfx) {
     match action {
         Action::PlayerShoot { .. } | Action::EnemyShoot { .. } => sfx.shoot(),
-        _ => {}
-    }
-}
-
-fn play_sound_for_action_end(action: &Action, sfx: &mut Sfx) {
-    match action {
-        Action::PlayerShoot { .. } | Action::EnemyShoot { .. } => sfx.shot_hit(),
         _ => {}
     }
 }

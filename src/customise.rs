@@ -224,6 +224,10 @@ pub(crate) fn customise_screen(
         )
             .into();
 
+        if ud != Tri::Zero || lr != Tri::Zero {
+            agb.sfx.move_cursor();
+        }
+
         match &mut state {
             CustomiseState::Dice => {
                 selected_dice.hide();
@@ -250,6 +254,7 @@ pub(crate) fn customise_screen(
                     selected_dice.set_y(0);
                     selected_dice.show();
                     state = CustomiseState::Face;
+                    agb.sfx.select();
                 }
             }
             CustomiseState::Face => {
@@ -263,6 +268,7 @@ pub(crate) fn customise_screen(
 
                 if input.is_just_pressed(Button::B) {
                     state = CustomiseState::Dice;
+                    agb.sfx.back();
                 } else if input.is_just_pressed(Button::A)
                     && !upgrades.is_empty()
                     && !modified.contains(&Cursor {
@@ -278,6 +284,7 @@ pub(crate) fn customise_screen(
                     cursor.upgrade += upgrades.len();
 
                     state = CustomiseState::Upgrade;
+                    agb.sfx.select();
                 }
             }
             CustomiseState::Upgrade => {
@@ -314,6 +321,7 @@ pub(crate) fn customise_screen(
 
                 if input.is_just_pressed(Button::B) {
                     state = CustomiseState::Face;
+                    agb.sfx.back();
                 } else if input.is_just_pressed(Button::A)
                     && player_dice.dice[cursor.dice].faces[cursor.face] != upgrades[cursor.upgrade]
                 {
@@ -339,6 +347,7 @@ pub(crate) fn customise_screen(
                     );
                     _dice = create_dice_display(&agb.obj, &player_dice);
                     state = CustomiseState::Face;
+                    agb.sfx.accept();
                 }
             }
         }
