@@ -43,6 +43,7 @@ pub enum Face {
     Disrupt,
     MalfunctionShot,
     DoubleShield,
+    TripleShield,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Hash)]

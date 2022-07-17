@@ -117,6 +117,7 @@ impl RolledDice {
                 Face::DoubleShot => *face_counts.entry(Face::Shoot).or_default() += 2,
                 Face::TripleShot => *face_counts.entry(Face::Shoot).or_default() += 3,
                 Face::DoubleShield => *face_counts.entry(Face::Shield).or_default() += 2,
+                Face::TripleShield => *face_counts.entry(Face::Shield).or_default() += 3,
                 other => *face_counts.entry(other).or_default() += 1,
             }
         }
@@ -182,7 +183,7 @@ impl RolledDice {
                 roll.cooldown = MALFUNCTION_COOLDOWN_FRAMES;
                 roll.face = Face::Malfunction;
             }
-            if roll.face == Face::TripleShot {
+            if roll.face == Face::TripleShot || roll.face == Face::TripleShield {
                 malfunction_all = true;
             }
         }
