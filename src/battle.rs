@@ -399,6 +399,8 @@ impl CurrentBattleState {
                     attack.max_cooldown = attack.cooldown.max(attack.max_cooldown);
                 }
 
+                sfx.disrupt();
+
                 None
             }
             Action::PlayerHeal { amount } => {
