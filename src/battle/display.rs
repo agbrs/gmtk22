@@ -1,4 +1,5 @@
 use agb::display::object::{Object, ObjectController};
+use agb::rng;
 use alloc::vec;
 use alloc::vec::Vec;
 
@@ -45,7 +46,11 @@ impl<'a> BattleScreenDisplay<'a> {
         let enemy_x = 167;
 
         let player_sprite = SHIP_SPRITES.sprite_for_ship(Ship::Player);
-        let enemy_sprite = SHIP_SPRITES.sprite_for_ship(Ship::Drone);
+        let enemy_sprite = SHIP_SPRITES.sprite_for_ship(if rng::gen() % 2 == 0 {
+            Ship::Drone
+        } else {
+            Ship::PilotedShip
+        });
 
         let mut player_obj = obj.object(obj.sprite(player_sprite));
         let mut enemy_obj = obj.object(obj.sprite(enemy_sprite));

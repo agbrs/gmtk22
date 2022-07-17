@@ -56,6 +56,7 @@ pub enum Face {
 pub enum Ship {
     Player,
     Drone,
+    PilotedShip,
     Shield,
 }
 

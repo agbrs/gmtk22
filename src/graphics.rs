@@ -79,17 +79,18 @@ impl FaceSprites {
 }
 
 pub struct ShipSprites {
-    sprites: [&'static Sprite; 3],
+    sprites: [&'static Sprite; 4],
 }
 
 impl ShipSprites {
     const fn load_ship_sprites() -> Self {
         const S_PLAYER: &Sprite = SPRITES.tags().get("player").sprite(0);
         const S_DRONE: &Sprite = SPRITES.tags().get("drone").sprite(0);
+        const S_PILOTED_SHIP: &Sprite = SPRITES.tags().get("piloted ship").sprite(0);
         const S_SHIELD: &Sprite = SPRITES.tags().get("ship shield").sprite(0);
 
         Self {
-            sprites: [S_PLAYER, S_DRONE, S_SHIELD],
+            sprites: [S_PLAYER, S_DRONE, S_PILOTED_SHIP, S_SHIELD],
         }
     }
 
