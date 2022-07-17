@@ -170,7 +170,7 @@ pub(crate) fn customise_screen(
     agb.sfx.frame();
     descriptions_map.set_scroll_pos((u16::MAX - 174, u16::MAX - 52).into());
 
-    descriptions_map.show();
+    // descriptions_map.show();
 
     let descriptions_1_tileset = TileSet::new(
         descriptions::descriptions1.tiles,
@@ -389,6 +389,7 @@ pub(crate) fn customise_screen(
     }
 
     descriptions_map.hide();
+    descriptions_map.clear(&mut agb.vram);
 
     player_dice
 }

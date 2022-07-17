@@ -446,7 +446,17 @@ impl CurrentBattleState {
     }
 }
 
-pub(crate) fn battle_screen(agb: &mut Agb, player_dice: PlayerDice, current_level: u32) {
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub(crate) enum BattleResult {
+    Win,
+    Loss,
+}
+
+pub(crate) fn battle_screen(
+    agb: &mut Agb,
+    player_dice: PlayerDice,
+    current_level: u32,
+) -> BattleResult {
     agb.sfx.battle();
     agb.sfx.frame();
 
@@ -551,7 +561,12 @@ pub(crate) fn battle_screen(agb: &mut Agb, player_dice: PlayerDice, current_leve
 
         if current_battle_state.enemy.health == 0 {
             agb.sfx.ship_explode();
-            return;
+            return BattleResult::Win;
+        }
+
+        if current_battle_state.player.health == 0 {
+            agb.sfx.ship_explode();
+            return BattleResult::Loss;
         }
 
         agb.obj.commit();

@@ -28,6 +28,7 @@ mod level_generation;
 mod sfx;
 
 use background::StarBackground;
+use battle::BattleResult;
 use sfx::Sfx;
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Hash)]
@@ -128,27 +129,11 @@ fn main(mut gba: agb::Gba) -> ! {
         ],
     };
 
-    let mut dice = PlayerDice {
-        dice: vec![basic_die.clone(); 2],
-    };
-
-    let mut current_level = 1;
-
     let mut mixer = gba.mixer.mixer();
     mixer.enable();
     let _interrupt_handler = mixer.setup_interrupt_handler();
 
-    let mut sfx = Sfx::new(&mut mixer);
-
-    let mut input = agb::input::ButtonController::new();
-    loop {
-        let _ = agb::rng::gen();
-        input.update();
-        if input.is_just_pressed(agb::input::Button::all()) {
-            break;
-        }
-        sfx.frame();
-    }
+    let sfx = Sfx::new(&mut mixer);
 
     let mut agb = Agb {
         obj: gfx,
@@ -159,19 +144,45 @@ fn main(mut gba: agb::Gba) -> ! {
     };
 
     loop {
-        dice = customise::customise_screen(
-            &mut agb,
-            dice.clone(),
-            &mut card_descriptions,
-            current_level,
-        );
+        let mut dice = PlayerDice {
+            dice: vec![basic_die.clone(); 2],
+        };
 
-        battle::battle_screen(&mut agb, dice.clone(), current_level);
+        let mut current_level = 1;
 
-        current_level += 1;
+        let mut input = agb::input::ButtonController::new();
+        loop {
+            let _ = agb::rng::gen();
+            input.update();
+            if input.is_just_pressed(agb::input::Button::all()) {
+                break;
+            }
+            agb.sfx.frame();
+        }
 
-        if current_level % 5 == 0 && dice.dice.len() < 5 {
-            dice.dice.push(basic_die.clone());
+        loop {
+            dice = customise::customise_screen(
+                &mut agb,
+                dice.clone(),
+                &mut card_descriptions,
+                current_level,
+            );
+
+            let result = battle::battle_screen(&mut agb, dice.clone(), current_level);
+            match result {
+                BattleResult::Win => {}
+                BattleResult::Loss => {
+                    agb.obj.commit();
+                    agb.sfx.customise();
+                    break;
+                }
+            }
+
+            current_level += 1;
+
+            if current_level % 5 == 0 && dice.dice.len() < 5 {
+                dice.dice.push(basic_die.clone());
+            }
         }
     }
 }
