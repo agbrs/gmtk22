@@ -292,7 +292,7 @@ pub(crate) fn customise_screen(
                 cursor.upgrade = (cursor.upgrade as isize + ud as isize)
                     .rem_euclid(upgrades.len() as isize) as usize;
 
-                if (upgrades[cursor.upgrade] as u32) < 3 {
+                if (upgrades[cursor.upgrade] as u32) < 17 {
                     if cursor.upgrade != old_updade {
                         for y in 0..11 {
                             for x in 0..8 {
