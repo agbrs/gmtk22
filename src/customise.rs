@@ -164,13 +164,15 @@ pub(crate) fn customise_screen(
     agb: &mut Agb,
     mut player_dice: PlayerDice,
     descriptions_map: &mut RegularMap,
+    help_background: &mut RegularMap,
     level: u32,
 ) -> PlayerDice {
     agb.sfx.customise();
     agb.sfx.frame();
     descriptions_map.set_scroll_pos((u16::MAX - 174, u16::MAX - 52).into());
 
-    // descriptions_map.show();
+    help_background.set_scroll_pos((u16::MAX - 148, u16::MAX - 34).into());
+    crate::background::load_help_text(&mut agb.vram, help_background, 0, (0, 0));
 
     let descriptions_1_tileset = TileSet::new(
         descriptions::descriptions1.tiles,
@@ -385,10 +387,15 @@ pub(crate) fn customise_screen(
         agb.vblank.wait_for_vblank();
         agb.obj.commit();
         descriptions_map.commit(&mut agb.vram);
+        help_background.commit(&mut agb.vram);
+        help_background.show();
         agb.star_background.commit(&mut agb.vram);
     }
 
     descriptions_map.hide();
+    help_background.hide();
+    crate::background::load_help_text(&mut agb.vram, help_background, 3, (0, 0));
+    crate::background::load_help_text(&mut agb.vram, help_background, 3, (0, 1));
     descriptions_map.clear(&mut agb.vram);
 
     player_dice

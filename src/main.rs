@@ -176,10 +176,12 @@ fn main(mut gba: agb::Gba) -> ! {
                 &mut agb,
                 dice.clone(),
                 &mut card_descriptions,
+                &mut help_background,
                 current_level,
             );
 
-            let result = battle::battle_screen(&mut agb, dice.clone(), current_level);
+            let result =
+                battle::battle_screen(&mut agb, dice.clone(), current_level, &mut help_background);
             match result {
                 BattleResult::Win => {}
                 BattleResult::Loss => {

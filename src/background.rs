@@ -19,7 +19,7 @@ pub fn load_palettes(vram: &mut VRamManager) {
 }
 
 pub(crate) fn load_help_text(
-    agb: &mut Agb,
+    vram: &mut VRamManager,
     background: &mut RegularMap,
     help_text_line: u16,
     at_tile: (u16, u16),
@@ -28,7 +28,7 @@ pub(crate) fn load_help_text(
 
     for x in 0..16 {
         background.set_tile(
-            &mut agb.vram,
+            vram,
             (x + at_tile.0, at_tile.1).into(),
             &help_tileset,
             TileSetting::new(help_text_line * 16 + x, false, false, 3),

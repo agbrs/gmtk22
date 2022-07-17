@@ -2,6 +2,7 @@ use crate::sfx::Sfx;
 use crate::{
     graphics::SELECT_BOX, level_generation::generate_attack, Agb, EnemyAttackType, Face, PlayerDice,
 };
+use agb::display::tiled::RegularMap;
 use agb::{hash_map::HashMap, input::Button};
 use alloc::vec;
 use alloc::vec::Vec;
@@ -456,9 +457,14 @@ pub(crate) fn battle_screen(
     agb: &mut Agb,
     player_dice: PlayerDice,
     current_level: u32,
+    help_background: &mut RegularMap,
 ) -> BattleResult {
     agb.sfx.battle();
     agb.sfx.frame();
+
+    help_background.set_scroll_pos((u16::MAX - 16, u16::MAX - 97).into());
+    crate::background::load_help_text(&mut agb.vram, help_background, 1, (0, 0));
+    crate::background::load_help_text(&mut agb.vram, help_background, 2, (0, 1));
 
     let obj = &agb.obj;
 
@@ -558,14 +564,22 @@ pub(crate) fn battle_screen(
         agb.star_background.update();
         agb.sfx.frame();
         agb.vblank.wait_for_vblank();
+        help_background.commit(&mut agb.vram);
+        help_background.show();
 
         if current_battle_state.enemy.health == 0 {
             agb.sfx.ship_explode();
+            help_background.hide();
+            crate::background::load_help_text(&mut agb.vram, help_background, 3, (0, 0));
+            crate::background::load_help_text(&mut agb.vram, help_background, 3, (0, 1));
             return BattleResult::Win;
         }
 
         if current_battle_state.player.health == 0 {
             agb.sfx.ship_explode();
+            help_background.hide();
+            crate::background::load_help_text(&mut agb.vram, help_background, 3, (0, 0));
+            crate::background::load_help_text(&mut agb.vram, help_background, 3, (0, 1));
             return BattleResult::Loss;
         }
 
