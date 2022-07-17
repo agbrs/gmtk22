@@ -86,9 +86,14 @@ impl RolledDice {
             .for_each(|(die_state, player_die)| match die_state {
                 DieState::Rolling(ref mut timeout, ref mut face, previous_face) => {
                     if *timeout == 0 {
+                        let mut number_of_rolls = 0;
                         *die_state = DieState::Rolled(RolledDie::new(loop {
                             let next_face = player_die.roll();
-                            if *previous_face != Face::Malfunction || next_face != *previous_face {
+                            number_of_rolls += 1;
+                            if *previous_face != Face::Malfunction
+                                || next_face != *previous_face
+                                || number_of_rolls > 16
+                            {
                                 break next_face;
                             }
                         }));
@@ -145,8 +150,12 @@ impl RolledDice {
         let shoot = *face_counts.entry(Face::Shoot).or_default();
         let shoot_power = (shoot * (shoot + 1)) / 2;
 
-        let malfunction_shoot = *face_counts.entry(Face::MalfunctionShot).or_default()
-            * *face_counts.entry(Face::Malfunction).or_default();
+        let malfunction_shots = *face_counts.entry(Face::MalfunctionShot).or_default();
+        let malfunctions = *face_counts.entry(Face::Malfunction).or_default();
+
+        let malfunction_shoot = (malfunction_shots * (malfunction_shots + 1)) / 2
+            * (malfunctions * (malfunctions + 1))
+            / 2;
 
         if malfunction_shoot != 0 {
             for roll in self.rolls.iter_mut().filter_map(|face| match face {
