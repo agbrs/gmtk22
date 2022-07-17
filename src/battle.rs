@@ -372,6 +372,10 @@ impl CurrentBattleState {
     fn apply_action(&mut self, action: Action, sfx: &mut Sfx) -> Option<Action> {
         match action {
             Action::PlayerActivateShield { amount } => {
+                if amount > self.player.shield_count {
+                    sfx.shield_up();
+                }
+
                 self.player.shield_count = self.player.shield_count.max(amount);
                 None
             }
@@ -382,6 +386,8 @@ impl CurrentBattleState {
                 } else if self.enemy.shield_count <= damage {
                     self.enemy.shield_count = 0; // TODO: Dispatch action of drop shield to animate that
                     sfx.shield_down();
+                } else {
+                    sfx.shield_defend();
                 }
 
                 None
@@ -405,11 +411,17 @@ impl CurrentBattleState {
                 } else if self.player.shield_count <= damage {
                     self.player.shield_count = 0; // TODO: Dispatch action of drop shield to animate that
                     sfx.shield_down();
+                } else {
+                    sfx.shield_defend();
                 }
 
                 None
             }
             Action::EnemyShield { amount } => {
+                if amount > self.enemy.shield_count {
+                    sfx.shield_up();
+                }
+
                 self.enemy.shield_count = self.enemy.shield_count.max(amount);
                 None
             }

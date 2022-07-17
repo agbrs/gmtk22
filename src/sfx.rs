@@ -29,6 +29,8 @@ const SELECT: &[u8] = include_wav!("sfx/select.wav");
 const BACK: &[u8] = include_wav!("sfx/back.wav");
 const ACCEPT: &[u8] = include_wav!("sfx/accept.wav");
 const SHIELD_DOWN: &[u8] = include_wav!("sfx/shield_down.wav");
+const SHIELD_UP: &[u8] = include_wav!("sfx/shield_up.wav");
+const SHIELD_DEFEND: &[u8] = include_wav!("sfx/shield_defend.wav");
 
 const MAX_CROSSFADE_FRAMES: i16 = 1;
 
@@ -162,5 +164,15 @@ impl<'a> Sfx<'a> {
 
     pub fn shield_down(&mut self) {
         self.mixer.play_sound(SoundChannel::new(SHIELD_DOWN));
+    }
+
+    pub fn shield_up(&mut self) {
+        self.mixer.play_sound(SoundChannel::new(SHIELD_UP));
+    }
+
+    pub fn shield_defend(&mut self) {
+        let mut channel = SoundChannel::new(SHIELD_DEFEND);
+        channel.volume(num!(0.5));
+        self.mixer.play_sound(channel);
     }
 }
