@@ -405,6 +405,7 @@ impl CurrentBattleState {
             }
             Action::PlayerHeal { amount } => {
                 self.player.health = self.player.max_health.min(self.player.health + amount);
+                sfx.heal();
                 None
             }
             Action::EnemyShoot { damage } => {
@@ -430,6 +431,7 @@ impl CurrentBattleState {
             }
             Action::EnemyHeal { amount } => {
                 self.enemy.health = self.enemy.max_health.min(self.enemy.health + amount);
+                sfx.heal();
                 None
             }
             Action::PlayerBurstShield { multiplier } => {

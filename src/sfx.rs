@@ -32,6 +32,7 @@ const SHIELD_DOWN: &[u8] = include_wav!("sfx/shield_down.wav");
 const SHIELD_UP: &[u8] = include_wav!("sfx/shield_up.wav");
 const SHIELD_DEFEND: &[u8] = include_wav!("sfx/shield_defend.wav");
 const DISRUPT: &[u8] = include_wav!("sfx/disrupt.wav");
+const HEAL: &[u8] = include_wav!("sfx/heal.wav");
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum BattleOrMenu {
@@ -165,5 +166,9 @@ impl<'a> Sfx<'a> {
 
     pub fn disrupt(&mut self) {
         self.mixer.play_sound(SoundChannel::new(DISRUPT));
+    }
+
+    pub fn heal(&mut self) {
+        self.mixer.play_sound(SoundChannel::new(HEAL));
     }
 }
