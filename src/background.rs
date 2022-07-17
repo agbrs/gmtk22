@@ -57,6 +57,7 @@ fn create_background_map(map: &mut RegularMap, vram: &mut VRamManager, stars_til
 }
 
 pub fn show_title_screen(background: &mut RegularMap, vram: &mut VRamManager, sfx: &mut Sfx) {
+    background.set_scroll_pos((0_u16, 0_u16).into());
     vram.set_background_palettes(stars::title.palettes);
     let tile_set = TileSet::new(stars::title.tiles, agb::display::tiled::TileFormat::FourBpp);
     background.hide();
