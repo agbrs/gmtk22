@@ -3,7 +3,7 @@ use agb::{
     include_gfx, rng,
 };
 
-use crate::{sfx::Sfx, Agb};
+use crate::sfx::Sfx;
 
 include_gfx!("gfx/stars.toml");
 
