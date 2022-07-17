@@ -30,6 +30,7 @@ mod sfx;
 
 use background::{show_title_screen, StarBackground};
 use battle::BattleResult;
+use graphics::NumberDisplay;
 use sfx::Sfx;
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Hash)]
@@ -155,19 +156,27 @@ fn main(mut gba: agb::Gba) -> ! {
         let mut current_level = 1;
 
         agb.sfx.title_screen();
-        show_title_screen(&mut help_background, &mut agb.vram, &mut agb.sfx);
-        agb.star_background.hide();
 
-        let mut input = agb::input::ButtonController::new();
-        loop {
-            let _ = agb::rng::gen();
-            input.update();
-            if input.is_just_pressed(agb::input::Button::all()) {
-                break;
+        {
+            show_title_screen(&mut help_background, &mut agb.vram, &mut agb.sfx);
+            let mut score_display = NumberDisplay::new((216, 9).into());
+            score_display.set_value(Some(save::load_high_score()), &agb.obj);
+            agb.obj.commit();
+            agb.star_background.hide();
+
+            let mut input = agb::input::ButtonController::new();
+            loop {
+                let _ = agb::rng::gen();
+                input.update();
+                if input.is_just_pressed(agb::input::Button::all()) {
+                    break;
+                }
+                agb.vblank.wait_for_vblank();
+                agb.sfx.frame();
             }
-            agb.vblank.wait_for_vblank();
-            agb.sfx.frame();
         }
+
+        agb.obj.commit();
 
         help_background.hide();
         help_background.clear(&mut agb.vram);
