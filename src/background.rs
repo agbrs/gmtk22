@@ -3,14 +3,37 @@ use agb::{
     include_gfx, rng,
 };
 
+use crate::Agb;
+
 include_gfx!("gfx/stars.toml");
+
+include_gfx!("gfx/help.toml");
 
 pub fn load_palettes(vram: &mut VRamManager) {
     vram.set_background_palettes(&[
         stars::stars.palettes[0].clone(),
         crate::customise::DESCRIPTIONS_1_PALETTE.clone(),
         crate::customise::DESCRIPTIONS_2_PALETTE.clone(),
+        help::help.palettes[0].clone(),
     ]);
+}
+
+pub(crate) fn load_help_text(
+    agb: &mut Agb,
+    background: &mut RegularMap,
+    help_text_line: u16,
+    at_tile: (u16, u16),
+) {
+    let help_tileset = TileSet::new(help::help.tiles, agb::display::tiled::TileFormat::FourBpp);
+
+    for x in 0..16 {
+        background.set_tile(
+            &mut agb.vram,
+            (x + at_tile.0, at_tile.1).into(),
+            &help_tileset,
+            TileSetting::new(help_text_line * 16 + x, false, false, 3),
+        )
+    }
 }
 
 // Expects a 64x32 map

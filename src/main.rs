@@ -110,6 +110,11 @@ fn main(mut gba: agb::Gba) -> ! {
         display::tiled::RegularBackgroundSize::Background32x32,
     );
 
+    let mut help_background = tiled.background(
+        Priority::P1,
+        display::tiled::RegularBackgroundSize::Background32x32,
+    );
+
     background::load_palettes(&mut vram);
     background0.show();
     background1.show();
