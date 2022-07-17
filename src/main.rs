@@ -48,6 +48,7 @@ pub enum Face {
     DoubleShotValue,
     TripleShotValue,
     BurstShield,
+    Invert,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Hash)]

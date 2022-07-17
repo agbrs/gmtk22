@@ -129,12 +129,10 @@ impl RolledDice {
             }
         }
 
+        let invert = *face_counts.entry(Face::Invert).or_default() % 2 == 1;
+
         // shield
-        if let Some(shield) = face_counts.get(&Face::Shield) {
-            actions.push(Action::PlayerActivateShield {
-                amount: (*shield * shield_multiplier).min(5),
-            });
-        }
+        let mut shield_amount = *face_counts.entry(Face::Shield).or_default() * shield_multiplier;
 
         // shooting
         let shoot = *face_counts.entry(Face::Shoot).or_default();
@@ -154,12 +152,22 @@ impl RolledDice {
             }
         }
 
-        let shoot_power = (shoot_power + malfunction_shoot) * shoot_multiplier;
+        let mut shoot_power = (shoot_power + malfunction_shoot) * shoot_multiplier;
+
+        if invert {
+            (shoot_power, shield_amount) = (shield_amount, shoot_power);
+        }
 
         if shoot_power > 0 {
             actions.push(Action::PlayerShoot {
                 damage: shoot_power,
                 piercing: *face_counts.entry(Face::Bypass).or_default(),
+            });
+        }
+
+        if shield_amount > 0 {
+            actions.push(Action::PlayerActivateShield {
+                amount: shield_amount.min(5),
             });
         }
 
