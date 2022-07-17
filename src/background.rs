@@ -8,7 +8,8 @@ include_gfx!("gfx/stars.toml");
 pub fn load_palettes(vram: &mut VRamManager) {
     vram.set_background_palettes(&[
         stars::stars.palettes[0].clone(),
-        crate::customise::DESCRIPTIONS_PALETTE.clone(),
+        crate::customise::DESCRIPTIONS_1_PALETTE.clone(),
+        crate::customise::DESCRIPTIONS_2_PALETTE.clone(),
     ]);
 }
 

@@ -18,7 +18,8 @@ use crate::{
 
 include_gfx!("gfx/descriptions.toml");
 
-pub const DESCRIPTIONS_PALETTE: &Palette16 = &descriptions::descriptions.palettes[0];
+pub const DESCRIPTIONS_1_PALETTE: &Palette16 = &descriptions::descriptions1.palettes[0];
+pub const DESCRIPTIONS_2_PALETTE: &Palette16 = &descriptions::descriptions2.palettes[0];
 
 enum CustomiseState {
     Dice,
@@ -171,8 +172,12 @@ pub(crate) fn customise_screen(
 
     descriptions_map.show();
 
-    let descriptions_tileset = TileSet::new(
-        descriptions::descriptions.tiles,
+    let descriptions_1_tileset = TileSet::new(
+        descriptions::descriptions1.tiles,
+        agb::display::tiled::TileFormat::FourBpp,
+    );
+    let descriptions_2_tileset = TileSet::new(
+        descriptions::descriptions2.tiles,
         agb::display::tiled::TileFormat::FourBpp,
     );
 
@@ -296,17 +301,33 @@ pub(crate) fn customise_screen(
                     if cursor.upgrade != old_updade {
                         for y in 0..11 {
                             for x in 0..8 {
-                                descriptions_map.set_tile(
-                                    &mut agb.vram,
-                                    (x, y).into(),
-                                    &descriptions_tileset,
-                                    TileSetting::new(
-                                        y * 8 + x + 8 * 11 * upgrades[cursor.upgrade] as u16,
-                                        false,
-                                        false,
-                                        1,
-                                    ),
-                                )
+                                if (upgrades[cursor.upgrade] as usize) < 10 {
+                                    descriptions_map.set_tile(
+                                        &mut agb.vram,
+                                        (x, y).into(),
+                                        &descriptions_1_tileset,
+                                        TileSetting::new(
+                                            y * 8 + x + 8 * 11 * upgrades[cursor.upgrade] as u16,
+                                            false,
+                                            false,
+                                            1,
+                                        ),
+                                    )
+                                } else {
+                                    descriptions_map.set_tile(
+                                        &mut agb.vram,
+                                        (x, y).into(),
+                                        &descriptions_2_tileset,
+                                        TileSetting::new(
+                                            y * 8
+                                                + x
+                                                + 8 * 11 * (upgrades[cursor.upgrade] as u16 - 10),
+                                            false,
+                                            false,
+                                            2,
+                                        ),
+                                    )
+                                }
                             }
                         }
                     }
