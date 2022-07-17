@@ -168,7 +168,7 @@ fn main(mut gba: agb::Gba) -> ! {
 
         current_level += 1;
 
-        if current_level % 5 == 0 {
+        if current_level % 5 == 0 && dice.dice.len() < 5 {
             dice.dice.push(basic_die.clone());
         }
     }
