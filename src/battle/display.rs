@@ -474,8 +474,6 @@ impl<'a> AnimationStateHolder<'a> {
                 bullet.show().set_x(*x as u16).set_y(36);
                 *x += 1;
 
-                agb::println!("{x}");
-
                 if *x > 180 {
                     AnimationUpdateState::RemoveWithAction(self.action.clone())
                 } else {
