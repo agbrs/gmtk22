@@ -55,13 +55,13 @@ impl<'a> Sfx<'a> {
     pub fn new(mixer: &'a mut Mixer) -> Self {
         let mut title_music = SoundChannel::new_high_priority(TITLE_BGM);
         title_music.should_loop();
-        let menu_channel = mixer.play_sound(title_music).unwrap();
+        let title_channel = mixer.play_sound(title_music).unwrap();
 
         Self {
             mixer,
             state: BattleOrMenu::Title,
 
-            current_bgm: menu_channel,
+            current_bgm: title_channel,
         }
     }
 
@@ -102,6 +102,19 @@ impl<'a> Sfx<'a> {
             .should_loop()
             .set_pos(if should_restart { 0.into() } else { pos });
         self.current_bgm = self.mixer.play_sound(menu_music).unwrap();
+    }
+
+    pub fn title_screen(&mut self) {
+        if self.state == BattleOrMenu::Title {
+            return;
+        }
+
+        self.state = BattleOrMenu::Title;
+        self.mixer.channel(&self.current_bgm).unwrap().stop();
+
+        let mut title_music = SoundChannel::new_high_priority(TITLE_BGM);
+        title_music.should_loop();
+        self.current_bgm = self.mixer.play_sound(title_music).unwrap();
     }
 
     pub fn roll(&mut self) {

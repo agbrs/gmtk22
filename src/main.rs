@@ -154,6 +154,7 @@ fn main(mut gba: agb::Gba) -> ! {
 
         let mut current_level = 1;
 
+        agb.sfx.title_screen();
         show_title_screen(&mut help_background, &mut agb.vram, &mut agb.sfx);
         agb.star_background.hide();
 
@@ -192,6 +193,9 @@ fn main(mut gba: agb::Gba) -> ! {
                 BattleResult::Loss => {
                     agb.obj.commit();
                     agb.sfx.customise();
+                    if save::load_high_score() < current_level {
+                        save::save_high_score(current_level);
+                    }
                     break;
                 }
             }
