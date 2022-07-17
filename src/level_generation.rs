@@ -55,7 +55,7 @@ pub fn generate_upgrades(level: u32) -> Vec<Face> {
     upgrade_values.insert(Face::MalfunctionShot, 15);
     upgrade_values.insert(Face::Heal, 8);
     upgrade_values.insert(Face::BurstShield, 30);
-    upgrade_values.insert(Face::Invert, 15);
+    upgrade_values.insert(Face::Invert, 30);
 
     let potential_upgrades: Vec<Face> = upgrade_values.keys().cloned().collect();
 
