@@ -112,12 +112,14 @@ impl RolledDice {
         let mut actions = vec![];
 
         let mut face_counts: HashMap<Face, u32> = HashMap::new();
+        let mut shield_multiplier = 1;
         for face in self.faces_for_accepting() {
             match face {
                 Face::DoubleShot => *face_counts.entry(Face::Shoot).or_default() += 2,
                 Face::TripleShot => *face_counts.entry(Face::Shoot).or_default() += 3,
                 Face::DoubleShield => *face_counts.entry(Face::Shield).or_default() += 2,
                 Face::TripleShield => *face_counts.entry(Face::Shield).or_default() += 3,
+                Face::DoubleShieldValue => shield_multiplier *= 2,
                 other => *face_counts.entry(other).or_default() += 1,
             }
         }
@@ -125,7 +127,7 @@ impl RolledDice {
         // shield
         if let Some(shield) = face_counts.get(&Face::Shield) {
             actions.push(Action::PlayerActivateShield {
-                amount: (*shield).min(5),
+                amount: (*shield * shield_multiplier).min(5),
             });
         }
 

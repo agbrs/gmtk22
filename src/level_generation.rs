@@ -46,6 +46,7 @@ pub fn generate_upgrades(level: u32) -> Vec<Face> {
     upgrade_values.insert(Face::Shield, 5);
     upgrade_values.insert(Face::DoubleShield, 10);
     upgrade_values.insert(Face::TripleShield, 20);
+    upgrade_values.insert(Face::DoubleShieldValue, 25);
     upgrade_values.insert(Face::Malfunction, -2);
     upgrade_values.insert(Face::Bypass, 7);
     upgrade_values.insert(Face::Disrupt, 10);
