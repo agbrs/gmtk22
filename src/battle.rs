@@ -203,6 +203,7 @@ impl RolledDice {
             if roll.face == Face::TripleShot
                 || roll.face == Face::TripleShield
                 || roll.face == Face::TripleShotValue
+                || roll.face == Face::BurstShield
             {
                 malfunction_all = true;
             }

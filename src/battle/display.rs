@@ -2,7 +2,7 @@ use agb::display::object::{Object, ObjectController};
 use alloc::vec;
 use alloc::vec::Vec;
 
-use crate::graphics::{BURST_SPRITE, DISRUPT_BULLET, SHIELD};
+use crate::graphics::{BURST_BULLET, DISRUPT_BULLET, SHIELD};
 use crate::{
     graphics::{
         FractionDisplay, HealthBar, NumberDisplay, BULLET_SPRITE, ENEMY_ATTACK_SPRITES,
@@ -352,17 +352,17 @@ impl<'a> AnimationStateHolder<'a> {
                 x: 64,
             },
             Action::PlayerHeal { .. } => AnimationState::PlayerHeal {},
+            Action::PlayerBurstShield { .. } => AnimationState::PlayerBurstShield { frame: 0 },
+            Action::PlayerSendBurstShield { .. } => AnimationState::PlayerSendBurstShield {
+                bullet: obj.object(obj.sprite(BURST_BULLET)),
+                x: 64,
+            },
             Action::EnemyShoot { .. } => AnimationState::EnemyShoot {
                 bullet: obj.object(obj.sprite(BULLET_SPRITE)),
                 x: 175,
             },
             Action::EnemyShield { amount, .. } => AnimationState::EnemyShield { amount, frame: 0 },
             Action::EnemyHeal { .. } => AnimationState::EnemyHeal {},
-            Action::PlayerBurstShield { .. } => AnimationState::PlayerBurstShield { frame: 0 },
-            Action::PlayerSendBurstShield { .. } => AnimationState::PlayerSendBurstShield {
-                bullet: obj.object(obj.sprite(BURST_SPRITE)),
-                x: 64,
-            },
         };
 
         Self { action: a, state }
@@ -459,6 +459,8 @@ impl<'a> AnimationStateHolder<'a> {
                         shield.set_sprite(obj.sprite(SHIELD.sprite(*frame / 2)));
                     }
 
+                    *frame += 1;
+
                     AnimationUpdateState::Continue
                 } else {
                     for shield in objs.player_shield.iter_mut() {
@@ -471,6 +473,8 @@ impl<'a> AnimationStateHolder<'a> {
             AnimationState::PlayerSendBurstShield { bullet, x } => {
                 bullet.show().set_x(*x as u16).set_y(36);
                 *x += 1;
+
+                agb::println!("{x}");
 
                 if *x > 180 {
                     AnimationUpdateState::RemoveWithAction(self.action.clone())

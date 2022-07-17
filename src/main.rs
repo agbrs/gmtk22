@@ -122,7 +122,7 @@ fn main(mut gba: agb::Gba) -> ! {
             Face::Shield,
             Face::Blank,
             Face::Malfunction,
-            Face::Blank,
+            Face::BurstShield,
             Face::Blank,
         ],
     };

@@ -19,7 +19,7 @@ pub const MODIFIED_BOX: &Sprite = SPRITES.tags().get("modified").sprite(0);
 
 pub const BULLET_SPRITE: &Sprite = SPRITES.tags().get("bullet").sprite(0);
 pub const DISRUPT_BULLET: &Sprite = SPRITES.tags().get("disrupt bullet").sprite(0);
-pub const BURST_SPRITE: &Sprite = SPRITES.tags().get("burst shield bullet").sprite(0);
+pub const BURST_BULLET: &Sprite = SPRITES.tags().get("burst shield bullet").sprite(0);
 pub const SHIELD: &Tag = SPRITES.tags().get("ship shield");
 
 pub const SHIP_SPRITES: &ShipSprites = &ShipSprites::load_ship_sprites();
