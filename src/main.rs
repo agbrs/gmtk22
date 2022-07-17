@@ -27,7 +27,7 @@ mod graphics;
 mod level_generation;
 mod sfx;
 
-use background::StarBackground;
+use background::{show_title_screen, StarBackground};
 use battle::BattleResult;
 use sfx::Sfx;
 
@@ -115,14 +115,6 @@ fn main(mut gba: agb::Gba) -> ! {
         display::tiled::RegularBackgroundSize::Background32x32,
     );
 
-    background::load_palettes(&mut vram);
-    background0.show();
-    background1.show();
-
-    let mut star_background = StarBackground::new(&mut background0, &mut background1, &mut vram);
-
-    star_background.commit(&mut vram);
-
     let basic_die = Die {
         faces: [
             Face::Shoot,
@@ -133,6 +125,9 @@ fn main(mut gba: agb::Gba) -> ! {
             Face::Blank,
         ],
     };
+
+    let mut star_background = StarBackground::new(&mut background0, &mut background1, &mut vram);
+    star_background.commit(&mut vram);
 
     let mut mixer = gba.mixer.mixer();
     mixer.enable();
@@ -155,6 +150,9 @@ fn main(mut gba: agb::Gba) -> ! {
 
         let mut current_level = 1;
 
+        show_title_screen(&mut help_background, &mut agb.vram, &mut agb.sfx);
+        agb.star_background.hide();
+
         let mut input = agb::input::ButtonController::new();
         loop {
             let _ = agb::rng::gen();
@@ -164,6 +162,14 @@ fn main(mut gba: agb::Gba) -> ! {
             }
             agb.sfx.frame();
         }
+
+        help_background.hide();
+        help_background.clear(&mut agb.vram);
+        help_background.commit(&mut agb.vram);
+        agb.sfx.frame();
+
+        background::load_palettes(&mut agb.vram);
+        agb.star_background.show();
 
         loop {
             dice = customise::customise_screen(

@@ -4,3 +4,7 @@ version = "1.0"
 filename = "stars.png"
 tile_size = "8x8"
 transparent_colour = "121105"
+
+[image.title]
+filename = "title-screen.png"
+tile_size = "8x8"

@@ -3,7 +3,7 @@ use agb::{
     include_gfx, rng,
 };
 
-use crate::Agb;
+use crate::{sfx::Sfx, Agb};
 
 include_gfx!("gfx/stars.toml");
 
@@ -56,6 +56,35 @@ fn create_background_map(map: &mut RegularMap, vram: &mut VRamManager, stars_til
     map.set_scroll_pos((0u16, rng::gen().rem_euclid(8) as u16).into());
 }
 
+pub fn show_title_screen(background: &mut RegularMap, vram: &mut VRamManager, sfx: &mut Sfx) {
+    vram.set_background_palettes(stars::title.palettes);
+    let tile_set = TileSet::new(stars::title.tiles, agb::display::tiled::TileFormat::FourBpp);
+    background.hide();
+
+    for x in 0..30u16 {
+        for y in 0..20u16 {
+            let tile_id = y * 30 + x;
+            background.set_tile(
+                vram,
+                (x, y).into(),
+                &tile_set,
+                TileSetting::new(
+                    tile_id,
+                    false,
+                    false,
+                    stars::title.palette_assignments[tile_id as usize],
+                ),
+            );
+        }
+
+        sfx.frame();
+    }
+
+    background.commit(vram);
+    sfx.frame();
+    background.show();
+}
+
 pub struct StarBackground<'a> {
     background1: &'a mut RegularMap,
     background2: &'a mut RegularMap,
@@ -103,5 +132,15 @@ impl<'a> StarBackground<'a> {
     pub fn commit(&mut self, vram: &mut VRamManager) {
         self.background1.commit(vram);
         self.background2.commit(vram);
+    }
+
+    pub fn hide(&mut self) {
+        self.background1.hide();
+        self.background2.hide();
+    }
+
+    pub fn show(&mut self) {
+        self.background1.show();
+        self.background2.show();
     }
 }
