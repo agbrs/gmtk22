@@ -161,6 +161,7 @@ fn main(mut gba: agb::Gba) -> ! {
             if input.is_just_pressed(agb::input::Button::all()) {
                 break;
             }
+            agb.vblank.wait_for_vblank();
             agb.sfx.frame();
         }
 
