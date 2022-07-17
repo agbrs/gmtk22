@@ -1,4 +1,4 @@
-use agb::fixnum::{num, Num};
+use agb::fixnum::num;
 use agb::sound::mixer::{ChannelId, Mixer, SoundChannel};
 use agb::{include_wav, rng};
 
@@ -18,8 +18,8 @@ const MULTI_ROLLS: &[&[u8]] = &[
     include_wav!("sfx/MultiRoll_5.wav"),
 ];
 
-const MENU_BGM: &[u8] = include_wav!("sfx/BGM_Fight.wav");
-const BATTLE_BGM: &[u8] = include_wav!("sfx/BGM_Menu.wav");
+const MENU_BGM: &[u8] = include_wav!("sfx/BGM_Menu.wav");
+const BATTLE_BGM: &[u8] = include_wav!("sfx/BGM_Fight.wav");
 
 const SHOOT: &[u8] = include_wav!("sfx/shoot.wav");
 const SHOT_HIT: &[u8] = include_wav!("sfx/shot_hit.wav");
@@ -32,8 +32,6 @@ const SHIELD_DOWN: &[u8] = include_wav!("sfx/shield_down.wav");
 const SHIELD_UP: &[u8] = include_wav!("sfx/shield_up.wav");
 const SHIELD_DEFEND: &[u8] = include_wav!("sfx/shield_defend.wav");
 
-const MAX_CROSSFADE_FRAMES: i16 = 1;
-
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum BattleOrMenu {
     Battle,
@@ -42,51 +40,26 @@ enum BattleOrMenu {
 
 pub struct Sfx<'a> {
     mixer: &'a mut Mixer,
-    frames_for_cross_fade: i16,
     state: BattleOrMenu,
 
-    customise_channel: ChannelId,
-    battle_channel: ChannelId,
+    current_bgm: ChannelId,
 }
 
 impl<'a> Sfx<'a> {
     pub fn new(mixer: &'a mut Mixer) -> Self {
-        let mut battle_music = SoundChannel::new_high_priority(BATTLE_BGM);
-        battle_music.should_loop().playback(num!(1.)).volume(0);
-        let battle_channel = mixer.play_sound(battle_music).unwrap();
-
         let mut menu_music = SoundChannel::new_high_priority(MENU_BGM);
-        menu_music.should_loop().playback(num!(1.)).volume(1);
+        menu_music.should_loop();
         let menu_channel = mixer.play_sound(menu_music).unwrap();
 
         Self {
             mixer,
-            frames_for_cross_fade: MAX_CROSSFADE_FRAMES,
             state: BattleOrMenu::Menu,
 
-            customise_channel: menu_channel,
-            battle_channel,
+            current_bgm: menu_channel,
         }
     }
 
     pub fn frame(&mut self) {
-        self.frames_for_cross_fade = (self.frames_for_cross_fade + 1).min(MAX_CROSSFADE_FRAMES);
-
-        let active_volume = Num::new(self.frames_for_cross_fade) / MAX_CROSSFADE_FRAMES;
-        let (battle_volume, menu_volume) = match self.state {
-            BattleOrMenu::Battle => (num!(1.) - active_volume, active_volume),
-            BattleOrMenu::Menu => (active_volume, num!(1.) - active_volume),
-        };
-
-        self.mixer
-            .channel(&self.customise_channel)
-            .unwrap()
-            .volume(menu_volume);
-        self.mixer
-            .channel(&self.battle_channel)
-            .unwrap()
-            .volume(battle_volume);
-
         self.mixer.frame();
     }
 
@@ -96,7 +69,14 @@ impl<'a> Sfx<'a> {
         }
 
         self.state = BattleOrMenu::Battle;
-        self.frames_for_cross_fade = 0;
+
+        let current_channel = self.mixer.channel(&self.current_bgm).unwrap();
+        let pos = current_channel.pos();
+        current_channel.stop();
+
+        let mut battle_music = SoundChannel::new_high_priority(BATTLE_BGM);
+        battle_music.should_loop().set_pos(pos);
+        self.current_bgm = self.mixer.play_sound(battle_music).unwrap();
     }
 
     pub fn customise(&mut self) {
@@ -105,7 +85,13 @@ impl<'a> Sfx<'a> {
         }
 
         self.state = BattleOrMenu::Menu;
-        self.frames_for_cross_fade = 0;
+        let current_channel = self.mixer.channel(&self.current_bgm).unwrap();
+        let pos = current_channel.pos();
+        current_channel.stop();
+
+        let mut menu_music = SoundChannel::new_high_priority(MENU_BGM);
+        menu_music.should_loop().set_pos(pos);
+        self.current_bgm = self.mixer.play_sound(menu_music).unwrap();
     }
 
     pub fn roll(&mut self) {
