@@ -98,6 +98,10 @@ struct Agb<'a> {
 fn main(mut gba: agb::Gba) -> ! {
     save::init_save();
 
+    if save::load_high_score() > 1000 {
+        save::save_high_score(0);
+    }
+
     let gfx = gba.display.object.get();
     let vblank = agb::interrupt::VBlank::get();
 

@@ -192,6 +192,7 @@ name = "gmtk22"
 version = "0.1.0"
 dependencies = [
  "agb",
+ "bare-metal",
 ]
 
 [[package]]
