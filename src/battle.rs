@@ -9,7 +9,7 @@ use self::display::BattleScreenDisplay;
 
 mod display;
 
-pub(super) const MALFUNCTION_COOLDOWN_FRAMES: u32 = 5 * 60;
+pub(super) const MALFUNCTION_COOLDOWN_FRAMES: u32 = 3 * 60;
 const ROLL_TIME_FRAMES_ALL: u32 = 2 * 60;
 const ROLL_TIME_FRAMES_ONE: u32 = 60 / 8;
 
