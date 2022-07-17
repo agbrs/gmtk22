@@ -5,12 +5,10 @@ use agb::{
         tiled::{RegularMap, TileSet, TileSetting},
         HEIGHT, WIDTH,
     },
-    hash_map::HashMap,
     include_gfx,
     input::{Button, Tri},
-    rng,
 };
-use alloc::vec;
+
 use alloc::vec::Vec;
 
 use crate::{
