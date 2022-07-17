@@ -475,14 +475,16 @@ pub(crate) fn battle_screen(agb: &mut Agb, player_dice: PlayerDice, current_leve
     loop {
         counter = counter.wrapping_add(1);
 
-        for action_to_apply in battle_screen_display.update(obj, &current_battle_state) {
+        for action_to_apply in
+            battle_screen_display.update(obj, &current_battle_state, &mut agb.sfx)
+        {
             if let Some(action_to_return) = current_battle_state.apply_action(action_to_apply) {
-                battle_screen_display.add_action(action_to_return, obj);
+                battle_screen_display.add_action(action_to_return, obj, &mut agb.sfx);
             }
         }
 
         for action in current_battle_state.update() {
-            battle_screen_display.add_action(action, obj);
+            battle_screen_display.add_action(action, obj, &mut agb.sfx);
         }
 
         current_battle_state.update_dice();
@@ -512,7 +514,7 @@ pub(crate) fn battle_screen(agb: &mut Agb, player_dice: PlayerDice, current_leve
 
         if input.is_just_pressed(Button::START) {
             for action in current_battle_state.accept_rolls() {
-                battle_screen_display.add_action(action, obj);
+                battle_screen_display.add_action(action, obj, &mut agb.sfx);
             }
             agb.sfx.roll_multi();
         }

@@ -21,6 +21,9 @@ const MULTI_ROLLS: &[&[u8]] = &[
 const MENU_BGM: &[u8] = include_wav!("sfx/BGM_Fight.wav");
 const BATTLE_BGM: &[u8] = include_wav!("sfx/BGM_Menu.wav");
 
+const SHOOT: &[u8] = include_wav!("sfx/shoot.wav");
+const SHOT_HIT: &[u8] = include_wav!("sfx/shot_hit.wav");
+
 const MAX_CROSSFADE_FRAMES: i16 = 1;
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -109,5 +112,13 @@ impl<'a> Sfx<'a> {
         let sound_channel = SoundChannel::new(MULTI_ROLLS[roll_sound_to_use as usize]);
 
         self.mixer.play_sound(sound_channel);
+    }
+
+    pub fn shoot(&mut self) {
+        self.mixer.play_sound(SoundChannel::new(SHOOT));
+    }
+
+    pub fn shot_hit(&mut self) {
+        self.mixer.play_sound(SoundChannel::new(SHOT_HIT));
     }
 }
