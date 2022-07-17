@@ -166,6 +166,7 @@ pub(crate) fn customise_screen(
     level: u32,
 ) -> PlayerDice {
     agb.sfx.customise();
+    sfx.frame();
     descriptions_map.set_scroll_pos((u16::MAX - 174, u16::MAX - 52).into());
 
     descriptions_map.show();
@@ -180,6 +181,8 @@ pub(crate) fn customise_screen(
     let mut _net = create_net(&agb.obj, &player_dice.dice[0], &[]);
     let mut _dice = create_dice_display(&agb.obj, &player_dice);
 
+    sfx.frame();
+
     let mut upgrades = crate::level_generation::generate_upgrades(level);
     let mut _upgrade_objects = create_upgrade_objects(&agb.obj, &upgrades);
 
@@ -193,6 +196,7 @@ pub(crate) fn customise_screen(
     selected_dice.hide();
     let mut selected_face = agb.obj.object(agb.obj.sprite(SELECTED_BOX));
     selected_face.hide();
+    sfx.frame();
 
     let mut counter = 0usize;
 

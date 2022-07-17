@@ -23,6 +23,7 @@ const BATTLE_BGM: &[u8] = include_wav!("sfx/BGM_Menu.wav");
 
 const SHOOT: &[u8] = include_wav!("sfx/shoot.wav");
 const SHOT_HIT: &[u8] = include_wav!("sfx/shot_hit.wav");
+const SHIP_EXPLODE: &[u8] = include_wav!("sfx/ship_explode.wav");
 
 const MAX_CROSSFADE_FRAMES: i16 = 1;
 
@@ -120,5 +121,9 @@ impl<'a> Sfx<'a> {
 
     pub fn shot_hit(&mut self) {
         self.mixer.play_sound(SoundChannel::new(SHOT_HIT));
+    }
+
+    pub fn ship_explode(&mut self) {
+        self.mixer.play_sound(SoundChannel::new(SHIP_EXPLODE));
     }
 }

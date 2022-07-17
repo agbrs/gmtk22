@@ -529,6 +529,7 @@ pub(crate) fn battle_screen(agb: &mut Agb, player_dice: PlayerDice, current_leve
         agb.vblank.wait_for_vblank();
 
         if current_battle_state.enemy.health == 0 {
+            agb.sfx.ship_explode();
             return;
         }
 
