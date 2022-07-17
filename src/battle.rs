@@ -56,7 +56,7 @@ impl RolledDie {
 
 #[derive(Debug)]
 enum DieState {
-    Rolling(u32, Face),
+    Rolling(u32, Face, Face),
     Rolled(RolledDie),
 }
 
@@ -84,9 +84,14 @@ impl RolledDice {
             .iter_mut()
             .zip(player_dice.dice.iter())
             .for_each(|(die_state, player_die)| match die_state {
-                DieState::Rolling(ref mut timeout, ref mut face) => {
+                DieState::Rolling(ref mut timeout, ref mut face, previous_face) => {
                     if *timeout == 0 {
-                        *die_state = DieState::Rolled(RolledDie::new(player_die.roll()));
+                        *die_state = DieState::Rolled(RolledDie::new(loop {
+                            let next_face = player_die.roll();
+                            if *previous_face != Face::Malfunction || next_face != *previous_face {
+                                break next_face;
+                            }
+                        }));
                     } else {
                         if *timeout % 2 == 0 {
                             *face = player_die.roll();
@@ -107,7 +112,7 @@ impl RolledDice {
 
     fn faces_to_render(&self) -> impl Iterator<Item = (Face, Option<u32>)> + '_ {
         self.rolls.iter().map(|rolled_die| match rolled_die {
-            DieState::Rolling(_, face) => (*face, None),
+            DieState::Rolling(_, face, _previous_face) => (*face, None),
             DieState::Rolled(rolled_die) => (rolled_die.face, rolled_die.cooldown()),
         })
     }
@@ -252,7 +257,11 @@ impl RolledDice {
             };
 
             if can_reroll {
-                self.rolls[die_index] = DieState::Rolling(time, player_dice.dice[die_index].roll());
+                self.rolls[die_index] = DieState::Rolling(
+                    time,
+                    player_dice.dice[die_index].roll(),
+                    selected_rolled_die.face,
+                );
             }
         }
     }
@@ -498,7 +507,7 @@ pub(crate) fn battle_screen(
             rolls: player_dice
                 .dice
                 .iter()
-                .map(|die| DieState::Rolling(ROLL_TIME_FRAMES_ALL, die.roll()))
+                .map(|die| DieState::Rolling(ROLL_TIME_FRAMES_ALL, die.roll(), Face::Blank))
                 .collect(),
         },
         player_dice: player_dice.clone(),
