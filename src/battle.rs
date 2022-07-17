@@ -64,6 +64,8 @@ pub enum Action {
     PlayerShoot { damage: u32, piercing: u32 },
     PlayerDisrupt { amount: u32 },
     PlayerHeal { amount: u32 },
+    PlayerBurstShield { multiplier: u32 },
+    PlayerSendBurstShield { damage: u32 },
     EnemyShoot { damage: u32 },
     EnemyShield { amount: u32 },
     EnemyHeal { amount: u32 },
@@ -158,6 +160,13 @@ impl RolledDice {
             actions.push(Action::PlayerShoot {
                 damage: shoot_power,
                 piercing: *face_counts.entry(Face::Bypass).or_default(),
+            });
+        }
+
+        // burst shield
+        if face_counts.contains_key(&Face::BurstShield) {
+            actions.push(Action::PlayerBurstShield {
+                multiplier: shoot_multiplier,
             });
         }
 
@@ -392,6 +401,19 @@ impl CurrentBattleState {
             }
             Action::EnemyHeal { amount } => {
                 self.enemy.health = self.enemy.max_health.min(self.enemy.health + amount);
+                None
+            }
+            Action::PlayerBurstShield { multiplier } => {
+                let damage =
+                    self.player.shield_count * (self.player.shield_count + 1) * multiplier / 2;
+                self.player.shield_count = 0;
+
+                Some(Action::PlayerSendBurstShield { damage })
+            }
+            Action::PlayerSendBurstShield { damage } => {
+                self.enemy.shield_count = 0;
+                self.enemy.health = self.enemy.health.saturating_sub(damage);
+
                 None
             }
         }

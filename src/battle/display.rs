@@ -2,7 +2,7 @@ use agb::display::object::{Object, ObjectController};
 use alloc::vec;
 use alloc::vec::Vec;
 
-use crate::graphics::{DISRUPT_BULLET, SHIELD};
+use crate::graphics::{BURST_SPRITE, DISRUPT_BULLET, SHIELD};
 use crate::{
     graphics::{
         FractionDisplay, HealthBar, NumberDisplay, BULLET_SPRITE, ENEMY_ATTACK_SPRITES,
@@ -319,6 +319,8 @@ enum AnimationState<'a> {
     PlayerShoot { bullet: Object<'a>, x: i32 },
     PlayerActivateShield { amount: u32, frame: usize },
     PlayerDisrupt { bullet: Object<'a>, x: i32 },
+    PlayerBurstShield { frame: usize },
+    PlayerSendBurstShield { bullet: Object<'a>, x: i32 },
     PlayerHeal {},
     EnemyShoot { bullet: Object<'a>, x: i32 },
     EnemyShield { amount: u32, frame: usize },
@@ -356,6 +358,11 @@ impl<'a> AnimationStateHolder<'a> {
             },
             Action::EnemyShield { amount, .. } => AnimationState::EnemyShield { amount, frame: 0 },
             Action::EnemyHeal { .. } => AnimationState::EnemyHeal {},
+            Action::PlayerBurstShield { .. } => AnimationState::PlayerBurstShield { frame: 0 },
+            Action::PlayerSendBurstShield { .. } => AnimationState::PlayerSendBurstShield {
+                bullet: obj.object(obj.sprite(BURST_SPRITE)),
+                x: 64,
+            },
         };
 
         Self { action: a, state }
@@ -445,6 +452,31 @@ impl<'a> AnimationStateHolder<'a> {
             }
             AnimationState::PlayerHeal {} => {
                 AnimationUpdateState::RemoveWithAction(self.action.clone()) // TODO: Animation for healing
+            }
+            AnimationState::PlayerBurstShield { frame } => {
+                if *frame < 10 {
+                    for shield in objs.player_shield.iter_mut() {
+                        shield.set_sprite(obj.sprite(SHIELD.sprite(*frame / 2)));
+                    }
+
+                    AnimationUpdateState::Continue
+                } else {
+                    for shield in objs.player_shield.iter_mut() {
+                        shield.set_sprite(obj.sprite(SHIELD.sprite(0)));
+                    }
+
+                    AnimationUpdateState::RemoveWithAction(self.action.clone())
+                }
+            }
+            AnimationState::PlayerSendBurstShield { bullet, x } => {
+                bullet.show().set_x(*x as u16).set_y(36);
+                *x += 1;
+
+                if *x > 180 {
+                    AnimationUpdateState::RemoveWithAction(self.action.clone())
+                } else {
+                    AnimationUpdateState::Continue
+                }
             }
         }
     }

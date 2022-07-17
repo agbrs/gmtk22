@@ -19,6 +19,7 @@ pub const MODIFIED_BOX: &Sprite = SPRITES.tags().get("modified").sprite(0);
 
 pub const BULLET_SPRITE: &Sprite = SPRITES.tags().get("bullet").sprite(0);
 pub const DISRUPT_BULLET: &Sprite = SPRITES.tags().get("disrupt bullet").sprite(0);
+pub const BURST_SPRITE: &Sprite = SPRITES.tags().get("burst shield bullet").sprite(0);
 pub const SHIELD: &Tag = SPRITES.tags().get("ship shield");
 
 pub const SHIP_SPRITES: &ShipSprites = &ShipSprites::load_ship_sprites();
@@ -26,7 +27,7 @@ pub const SHIP_SPRITES: &ShipSprites = &ShipSprites::load_ship_sprites();
 pub const SMALL_SPRITES: &SmallSprites = &SmallSprites {};
 
 pub struct FaceSprites {
-    sprites: [&'static Sprite; 15],
+    sprites: [&'static Sprite; 16],
 }
 
 impl FaceSprites {
@@ -46,6 +47,7 @@ impl FaceSprites {
         const S_DOUBLE_SHIELD_VALUE: &Sprite = SPRITES.tags().get("double shield value").sprite(0);
         const S_DOUBLE_SHOT_VALUE: &Sprite = SPRITES.tags().get("double shoot power").sprite(0);
         const S_TRIPLE_SHOT_VALUE: &Sprite = SPRITES.tags().get("triple shoot power").sprite(0);
+        const S_BURST_SHIELD: &Sprite = SPRITES.tags().get("burst shield").sprite(0);
 
         Self {
             sprites: [
@@ -64,6 +66,7 @@ impl FaceSprites {
                 S_DOUBLE_SHIELD_VALUE,
                 S_DOUBLE_SHOT_VALUE,
                 S_TRIPLE_SHOT_VALUE,
+                S_BURST_SHIELD,
             ],
         }
     }
