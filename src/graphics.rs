@@ -26,7 +26,7 @@ pub const SHIP_SPRITES: &ShipSprites = &ShipSprites::load_ship_sprites();
 pub const SMALL_SPRITES: &SmallSprites = &SmallSprites {};
 
 pub struct FaceSprites {
-    sprites: [&'static Sprite; 14],
+    sprites: [&'static Sprite; 15],
 }
 
 impl FaceSprites {
@@ -45,6 +45,7 @@ impl FaceSprites {
         const S_TRIPLE_SHIELD: &Sprite = SPRITES.tags().get("triple shield").sprite(0);
         const S_DOUBLE_SHIELD_VALUE: &Sprite = SPRITES.tags().get("double shield value").sprite(0);
         const S_DOUBLE_SHOT_VALUE: &Sprite = SPRITES.tags().get("double shoot power").sprite(0);
+        const S_TRIPLE_SHOT_VALUE: &Sprite = SPRITES.tags().get("triple shoot power").sprite(0);
 
         Self {
             sprites: [
@@ -62,6 +63,7 @@ impl FaceSprites {
                 S_TRIPLE_SHIELD,
                 S_DOUBLE_SHIELD_VALUE,
                 S_DOUBLE_SHOT_VALUE,
+                S_TRIPLE_SHOT_VALUE,
             ],
         }
     }

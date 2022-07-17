@@ -42,8 +42,9 @@ pub fn generate_upgrades(level: u32) -> Vec<Face> {
 
     upgrade_values.insert(Face::Shoot, 5);
     upgrade_values.insert(Face::DoubleShot, 10);
-    upgrade_values.insert(Face::DoubleShotValue, 10);
+    upgrade_values.insert(Face::DoubleShotValue, 15);
     upgrade_values.insert(Face::TripleShot, 20);
+    upgrade_values.insert(Face::TripleShotValue, 30);
     upgrade_values.insert(Face::Shield, 5);
     upgrade_values.insert(Face::DoubleShield, 10);
     upgrade_values.insert(Face::TripleShield, 20);
